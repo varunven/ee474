@@ -1,8 +1,8 @@
 // the setup function runs once when you press reset or power the board
 #define SPEAKER_PIN 2
 
-// #define PROBLEM_4
-#define PROBLEM_5
+// #define PROBLEM_3
+#define PROBLEM_4
 
 // Some Constants
 const int SECOND = 1000;
@@ -25,19 +25,19 @@ void setup() {
 uint32_t counter = 0;
 // the loop function runs over and over again forever
 void loop() {
-#ifdef PROBLEM_4
+#ifdef PROBLEM_3
   digitalWrite(10, HIGH);          // turn the LED on (HIGH is the voltage level) 
   digitalWrite(LED_BUILTIN, LOW);  // turn the LED off (LOW is the voltage level)
-  digitalWrite(SPEAKER_PIN, HIGH); // Click the speaker for problem 4 only
+  digitalWrite(SPEAKER_PIN, HIGH); // Click the speaker for problem 3 only
   delay(SECOND);  // wait for a second
 
   digitalWrite(10, LOW);            // turn the LED off (LOW is the voltage level)
   digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-  digitalWrite(SPEAKER_PIN, LOW); // Click the Speaker for Problem 4 only
+  digitalWrite(SPEAKER_PIN, LOW); // Click the Speaker for Problem 3 only
   delay(SECOND); // wait for a second
 #endif
 
-#ifdef PROBLEM_5
+#ifdef PROBLEM_4
   if (counter % (SPEAKER_MS/2) == 0 && counter < 4 * SECOND) { // Toggle the speaker every SPEAKER_MS/2 ms for square wave with 50% duty cycle
     digitalWrite(SPEAKER_PIN, (counter % SPEAKER_MS) / (SPEAKER_MS / 2)); 
   }
