@@ -1,57 +1,56 @@
 #define NUM_PINS 3 //total number of pins used in part 1.2
-//pins used for part 1.2
-#define PIN_1 47 
-#define PIN_2 48
-#define PIN_3 49
-
-#define ALL_BITS 0xFF; //flag for setting all bits in the DDR to true
-
-//masks used for bit setting
-#define  BIT_2      1<<2;  //  shift “1” 2 places over
-#define  BIT_1      1<<1;  //  shift “1” 1 places over
-#define  BIT_0      1<<0;  //  shift “1” 0 places over
+#define LED_DELAY 1000 / NUM_PINS
 
 #define PART_ONE_TWO 1
-// the setup function runs once when you press reset or power the board
+
+#ifdef PART_ONE_TWO
+  //pins used for part 1.2
+  #define LED_1 47 
+  #define LED_2 48
+  #define LED_3 49
+#else
+  #define ALL_BITS 0xFF //flag for setting all bits in the DDR to true
+  //masks used for bit setting
+  #define  LED_1 1 << 2  // Pin 47
+  #define  LED_2 1 << 1  // Pin 48
+  #define  LED_3 1 << 0  // Pin 49
+#endif
+
 void setup() {
-  Serial.begin(9600);
-  // initialize digital pin LED_BUILTIN as an output.
-  if(PART_ONE_TWO){
-    pinMode(PIN_1, OUTPUT);
-    pinMode(PIN_2, OUTPUT);
-    pinMode(PIN_3, OUTPUT);
-  }
-  else{
-    DDRL = ALL_BITS;
-  }
+  // initialize output pins
+  #ifdef PART_ONE_TWO)
+    pinMode(LED_1, OUTPUT);
+    pinMode(LED_2, OUTPUT);
+    pinMode(LED_3, OUTPUT);
+  #else
+    DDRL = LED_1 | LED_2 | LED_3;
+  #endif
 }
 
-// the loop function runs over and over again forever
 void loop() {
-  if(PART_ONE_TWO){
-    int del = 1000/NUM_PINS; //delay of 1/number of pins of a second in this lab
-    digitalWrite(PIN_1, HIGH);   // turn the LED on (HIGH is the voltage level)
-    delay(del);                       // wait for a second
-    digitalWrite(PIN_1, LOW);    // turn the LED off by making the voltage LOW
+  #ifdef PART_ONE_TWO 
+    digitalWrite(LED_1, HIGH);   // Turn on LED_1 for delay
+    delay(LED_DELAY);                
+    digitalWrite(LED_1, LOW);    
     
-    digitalWrite(PIN_2, HIGH);   // turn the LED on (HIGH is the voltage level)
-    delay(del);                       // wait for a second
-    digitalWrite(PIN_2, LOW);    // turn the LED off by making the voltage LOW
+    digitalWrite(LED_2, HIGH);   // Turn on LED_2 for delay
+    delay(LED_DELAY);                
+    digitalWrite(LED_2, LOW);    
     
-    digitalWrite(PIN_3, HIGH);   // turn the LED on (HIGH is the voltage level)
-    delay(del);                       // wait for a second
-    digitalWrite(PIN_3, LOW);    // turn the LED off by making the voltage LOW
-  }
-  else{
-    int del = 1000/NUM_PINS; //delay of 1/number of pins of a second in this lab
-    PORTL &= !BIT_0; // turn the pin at bit 0, port L off
-    PORTL |= BIT_2; // turn the pin at bit 2, port L on
-    delay(del);
-    PORTL &= !BIT_2; // turn the pin at bit 2, port L off
-    PORTL |= BIT_1; // turn the pin at bit 1, port L on
-    delay(del);
-    PORTL &= !BIT_1; // turn the pin at bit 1, port L off
-    PORTL |= BIT_0; // turn the pin at bit 0, port L on
-    delay(del);
-  }
+    digitalWrite(LED_3, HIGH);   // Turn on LED_3 for delay
+    delay(LED_DELAY);                
+    digitalWrite(LED_3, LOW);    
+  #else
+    PORTL |= LED_1; // Turn on LED_1 for delay
+    delay(LED_DELAY);
+    PORTL &= !LED_1;
+
+    PORTL |= LED_2; // Turn on LED_2 for delay
+    delay(LED_DELAY);
+    PORTL &= !LED_2;
+
+    PORTL |= LED_3; // Turn on LED_3 for delay
+    delay(LED_DELAY);
+    PORTL &= !LED_3;
+  #endif
 }

@@ -1,11 +1,10 @@
 #define CLOCK_RATE 16000000
 
+// Sets the output rate for TIMER4
+// Input: hertz - the hertz to drive TIMER4 at.
 void setTimer4Hertz(int hertz);
 
 void setup() {
-  // Enable Serial for debugging
-  Serial.begin(9600);
-
   // Enable the clock
   PRR1 &= ~(1 << PRTIM4);
 
@@ -47,7 +46,6 @@ void loop() {
 }
 
 void setTimer4Hertz(int hertz) {
-  Serial.print(hertz);
-  Serial.println("Hz");
-  OCR4A = CLOCK_RATE/(hertz * 2);
+  // Set the CTC value based on the hertz. Multiplying by two because the clock toggles, and so the value for the ORC4A needs to be toggled twice to be one cycle.
+  OCR4A = CLOCK_RATE / (hertz * 2);
 }
