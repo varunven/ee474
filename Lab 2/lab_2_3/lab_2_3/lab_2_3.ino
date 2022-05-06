@@ -14,7 +14,7 @@
 
 //PART 2
 #define CLOCK_RATE 16000000
-#define CYCLE_TIME 4
+#define CYCLE_TIME 4000
 
 //MARY HAD A LITTLE LAMB NOTES AND CONST ARRAY
 #define NOTE_c 3830 // 261 Hz
@@ -138,65 +138,59 @@ void taskB(int seconds){
 }
 
 //Task A for LED Sequence
-void taskAMod(int seconds){
-  unsigned long currMillis = millis();
-  unsigned long startMillis = millis();
-  while(currMillis-startMillis<seconds*1000){
+void taskAMod(int currMillis, int startMillis){
     int del = 1000/NUM_PINS;
     //pin 1
-    while(currMillis-startMillis < del){
+    if(currMillis-startMillis < del){
       digitalWrite(PIN_1, HIGH);   // turn the LED on (HIGH is the voltage level)
+    }
+    else if(currMillis-startMillis >= del){
       digitalWrite(PIN_1, LOW);   // turn the LED on (HIGH is the voltage level)
-      currMillis = millis();
     }
-  
-    //pin 2
-    while(currMillis-startMillis < 2*del){
+
+    if(currMillis-startMillis >= del && currMillis-startMillis < 2*del){
       digitalWrite(PIN_2, HIGH);   // turn the LED on (HIGH is the voltage level)
+    }
+    else if(currMillis-startMillis >= 2*del){
       digitalWrite(PIN_2, LOW);   // turn the LED on (HIGH is the voltage level)
-      currMillis = millis();
     }
-    
-    //pin 3
-    while(currMillis-startMillis < 3*del){
+
+    if(currMillis-startMillis >= 2*del && currMillis-startMillis < 3*del){
       digitalWrite(PIN_3, HIGH);   // turn the LED on (HIGH is the voltage level)
-      digitalWrite(PIN_3, LOW);   // turn the LED on (HIGH is the voltage level)
-      currMillis = millis();
     }
-    currMillis = millis();
-  }
+    else if(currMillis-startMillis >= 3*del){
+      digitalWrite(PIN_3, LOW);   // turn the LED on (HIGH is the voltage level)
+    }
 }
 
-void taskBMod(int seconds){
-  unsigned long currMillis = millis();
-  unsigned long startMillis = millis();
+void taskBMod(int currMillis, int startMillis){
   int del = 1000;
-  while(currMillis-startMillis < seconds*1000){
-    // Set tp 400Hz
-    while(currMillis-startMillis < del){
-      setTimer4Hertz(400);
-      currMillis = millis();
-    }
-  
-    // Set to 250Hz
-    while(currMillis-startMillis < 2*del){
-      setTimer4Hertz(250);
-      currMillis = millis();
-    }
-  
-    // Set to 800Hz
-    while(currMillis-startMillis < 3*del){
-      setTimer4Hertz(800);
-      currMillis = millis();
-    }
-
-    // Disable then reenable the output
-    TCCR4A &= ~(1 << COM4A0);
-    while(currMillis-startMillis < 4*del){
-      currMillis = millis();
-    }
+  // Set tp 400Hz
+  if(currMillis-startMillis < del){
     TCCR4A |= 1 << COM4A0;
-    currMillis = millis();
+    setTimer4Hertz(400);
+  }
+
+  // Set to 250Hz
+  else if(currMillis-startMillis >= del && currMillis-startMillis < 2*del){
+    TCCR4A |= 1 << COM4A0;
+    setTimer4Hertz(250);
+  }
+
+  // Set to 800Hz
+  else if(currMillis-startMillis >= 2*del && currMillis-startMillis < 3*del){
+    TCCR4A |= 1 << COM4A0;
+    setTimer4Hertz(800);
+  }
+
+  else if(currMillis-startMillis >= 3*del && currMillis-startMillis < 4*del){
+    // Disable the output
+    TCCR4A &= ~(1 << COM4A0);
+  }
+
+  else {
+    // Disable then reenable the output
+    TCCR4A |= 1 << COM4A0;
   }
 }
 
@@ -230,11 +224,22 @@ void mary(){
 }
 
 void taskAB(int seconds){
+  unsigned long currMillisA = millis();
+  unsigned long currMillisB = millis();
   unsigned long currMillis = millis();
+ 
+  unsigned long startMillisA = millis();
+  unsigned long startMillisB = millis();
   unsigned long startMillis = millis();
   while(currMillis-startMillis < seconds*1000){
-    taskAMod(2);
-    taskBMod(CYCLE_TIME);
+    if((currMillis-startMillisA)%(2000) == 0){
+      startMillisA = currMillis;
+    }
+    taskAMod(currMillis, startMillisA);
+    if((currMillis-startMillisB)%(CYCLE_TIME) == 0){
+      startMillisB = currMillis;
+    }
+    taskBMod(currMillis, startMillisB);
     currMillis = millis();
   }
 }
@@ -252,17 +257,17 @@ void noOutputs(int seconds){
 }
 
 void taskC(){
-////  //task A
-//  taskA(2);
-////  //task B  
-//  taskB(4);
-//  //task A and B together
-//  if(TASK_A_AND_B){
-//      taskAB(10);
-//  }
-  if(MARY){
-    mary();
+  //task A and B together
+  if(TASK_A_AND_B){
+      taskAB(10);
   }
+  else{
+    taskA(2);
+    taskB(4);
+  }
+//  if(MARY){
+//    mary();
+//  }
 //  //no outputs
   noOutputs(1);
 }
