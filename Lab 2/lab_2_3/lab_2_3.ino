@@ -21,7 +21,7 @@
 #define NOTE_d 3400 // 294 Hz
 #define NOTE_e 3038 // 329 Hz
 #define NOTE_f 2864 // 349 Hz
-#define NOTE_g 2550 // 392 Hz\
+#define NOTE_g 2550 // 392 Hz
 #define NOTE_a 2272 // 440 Hz
 #define NOTE_b 2028 // 493 Hz
 #define NOTE_C 1912 // 523 Hz
@@ -29,14 +29,40 @@
 
 const int melody[] = {NOTE_e, NOTE_R, NOTE_d, NOTE_R, NOTE_c, NOTE_R, NOTE_d, NOTE_R, NOTE_e, NOTE_R, NOTE_e, NOTE_R, NOTE_e, NOTE_R, NOTE_d, NOTE_R,NOTE_d, NOTE_R,NOTE_d, NOTE_R,NOTE_e, NOTE_R,NOTE_g, NOTE_R,NOTE_g, NOTE_R,NOTE_e, NOTE_R,NOTE_d, NOTE_R, NOTE_c, NOTE_R,NOTE_d, NOTE_R,NOTE_e, NOTE_R,NOTE_e, NOTE_R,NOTE_e, NOTE_R,NOTE_e, NOTE_R,NOTE_d, NOTE_R,NOTE_d, NOTE_R,NOTE_e, NOTE_R,NOTE_d, NOTE_R, NOTE_c, NOTE_R, NOTE_c};
 
+// Runs Task A
+// Input: seconds - seconds to run the task for
 void taskA(int seconds);
+
+// Runs Task B
+// Input: seconds - seconds to run the task for
 void taskB(int seconds);
-void taskAMod(int seconds);
-void taskBMod(int seconds);
+
+// Runs Task A syncronously
+// Input: currMillis - the current milliseconds
+//        startMillis - the milliseconds when the task started
+void taskAMod(int currMillis, int startMillis);
+
+// Runs Task B syncronously
+// Input: currMillis - the current milliseconds
+//        startMillis - the milliseconds when the task started
+void taskBMod(int currMillis, int startMillis);
+
+// Sets the output rate for TIMER4
+// Input: hertz - the hertz to drive TIMER4 at. If hertz is zero, the timer is disabled.
 void setTimer4Hertz(int hertz);
+
+// Plays Mary had a little lamb
 void mary();
+
+// Runs Tasks A and B together
+// Input: seconds - seconds to run the tasks for
 void taskAB(int seconds);
+
+// No outputs
+// Input: seconds - seconds for no outputs
 void noOutputs(int seconds);
+
+// Runs Task C
 void taskC();
 
 void setup() {
@@ -44,15 +70,7 @@ void setup() {
   Serial.begin(9600);
 
   // initialize digital pin LED_BUILTIN as an output.
-  if(PART_ONE_TWO){
-    pinMode(PIN_1, OUTPUT);
-    pinMode(PIN_2, OUTPUT);
-    pinMode(PIN_3, OUTPUT);
-  }
-  else{
-    DDRL = ALL_BITS;
-  }
-  pinMode(LED_BUILTIN, OUTPUT);
+  DDRL = ALL_BITS;
 
   // Enable the clock
   PRR1 &= ~(1 << PRTIM4);
@@ -83,32 +101,16 @@ void taskA(int seconds){
   unsigned long currMillis = millis();
   unsigned long startMillis = millis();
   while(currMillis-startMillis<seconds*1000){
-    if(PART_ONE_TWO){
-      int del = 1000/NUM_PINS;
-      digitalWrite(PIN_1, HIGH);   // turn the LED on (HIGH is the voltage level)
-      delay(del);                       // wait for a second
-      digitalWrite(PIN_1, LOW);    // turn the LED off by making the voltage LOW
-      
-      digitalWrite(PIN_2, HIGH);   // turn the LED on (HIGH is the voltage level)
-      delay(del);                       // wait for a second
-      digitalWrite(PIN_2, LOW);    // turn the LED off by making the voltage LOW
-      
-      digitalWrite(PIN_3, HIGH);   // turn the LED on (HIGH is the voltage level)
-      delay(del);                       // wait for a second
-      digitalWrite(PIN_3, LOW);    // turn the LED off by making the voltage LOW
-    }
-    else{
-      int del = 1000/NUM_PINS;
-      PORTL &= !BIT_0;
-      PORTL |= BIT_2;
-      delay(del);
-      PORTL &= !BIT_2;
-      PORTL |= BIT_1;
-      delay(del);
-      PORTL &= !BIT_1;
-      PORTL |= BIT_0;
-      delay(del);
-    }
+    int del = 1000/NUM_PINS;
+    PORTL &= !BIT_0;
+    PORTL |= BIT_2;
+    delay(del);
+    PORTL &= !BIT_2;
+    PORTL |= BIT_1;
+    delay(del);
+    PORTL &= !BIT_1;
+    PORTL |= BIT_0;
+    delay(del);
     currMillis = millis();
   }
 }
@@ -195,8 +197,6 @@ void taskBMod(int currMillis, int startMillis){
 }
 
 void setTimer4Hertz(int hertz) {
-  Serial.print(hertz);
-  Serial.println("Hz");
   OCR4A = CLOCK_RATE/(hertz * 2);
 }
 
@@ -258,13 +258,9 @@ void noOutputs(int seconds){
 
 void taskC(){
   //task A and B together
-  if(TASK_A_AND_B){
-      taskAB(10);
-  }
-  else{
-    taskA(2);
-    taskB(4);
-  }
+  taskA(2);
+  taskB(4);
+  taskAB(10);
 //  if(MARY){
 //    mary();
 //  }

@@ -1,7 +1,7 @@
 #define NUM_PINS 3 //total number of pins used in part 1.2
 #define LED_DELAY 1000 / NUM_PINS
 
-#define PART_ONE_TWO 1
+#define PART_ONE_TWO 0
 
 #ifdef PART_ONE_TWO
   //pins used for part 1.2

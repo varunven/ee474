@@ -23,7 +23,7 @@
 #define NOTE_b 493 // 493 Hz
 #define NOTE_C 523 // 523 Hz
 #define NOTE_R 0 // Empty note
-#define NOTES 72 // Note count in melody
+
 const int melody[] = { 
   NOTE_e, NOTE_R, 
   NOTE_d, NOTE_R, 
@@ -31,15 +31,15 @@ const int melody[] = {
   NOTE_d, NOTE_R, 
   NOTE_e, NOTE_R, 
   NOTE_e, NOTE_R, 
-  NOTE_e, NOTE_e,
+  NOTE_e,
   NOTE_e, NOTE_R,
   NOTE_d, NOTE_R, 
   NOTE_d, NOTE_R, 
-  NOTE_d, NOTE_d,
+  NOTE_d,
   NOTE_d, NOTE_R, 
   NOTE_e, NOTE_R, 
   NOTE_g, NOTE_R, 
-  NOTE_g, NOTE_g,
+  NOTE_g,
   NOTE_g, NOTE_R, 
 
   NOTE_e, NOTE_R, 
@@ -48,19 +48,22 @@ const int melody[] = {
   NOTE_d, NOTE_R,
   NOTE_e, NOTE_R,
   NOTE_e, NOTE_R,
-  NOTE_e, NOTE_e,
+  NOTE_e,
   NOTE_e, NOTE_R,
   NOTE_d, NOTE_R,
   NOTE_d, NOTE_R,
   NOTE_e, NOTE_R,
   NOTE_d, NOTE_R,
-  NOTE_c, NOTE_c, 
+  NOTE_c, 
   NOTE_c, NOTE_R,
 
   NOTE_R, NOTE_R,
   NOTE_R, NOTE_R,
   NOTE_R, NOTE_R,
   NOTE_R, NOTE_R};
+
+// constexpr makes this evaluate at runtime, reducing calculation on the microcontroller
+constexpr int NOTES = sizeof(melody) / sizeof(int); // Note count in melody
 
 // Clock Rate for MEGA2560
 #define CLOCK_RATE 16000000
@@ -100,7 +103,8 @@ void setup(){
 }
 
 void loop(){
-  for (int i = 0; i < 6; i++) {
+  int repeats = melody[currentNote % NOTES] == NOTE_R ? 1 : 6; // Play the empty notes shorter. 
+  for (int i = 0; i < repeats; i++) {
     int x = analogRead(JOY_X) / (1 << (10 - 3)); // Read JOY_X and then divide to a value for 0-7
     int y = analogRead(JOY_Y) / (1 << (10 - 3)); // Read JOY_Y and then divide to a value for 0-7
 
@@ -108,7 +112,8 @@ void loop(){
     delay(50); // Delay 50ms
     spiTransfer(x, 0); // Clear the LED
   }
-  setTimer4Hertz(melody[(currentNote++) % NOTES]);
+  // Set the new note.
+  setTimer4Hertz(melody[(++currentNote) % NOTES]);
 }
 
 void enableTimer4() {
