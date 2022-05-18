@@ -1,6 +1,6 @@
 #define CLOCK_RATE 16000000
 
-#define DEMO_NUMBER 1
+#define DEMO_NUMBER 4
 
 #if DEMO_NUMBER == 1
   #define RR
@@ -12,6 +12,10 @@
   #define TASK_2
 #elif DEMO_NUMBER == 3
 #elif DEMO_NUMBER == 4
+  #define SRRI
+  #define TASK_1
+  #define TASK_2
+  #define TASK_3
 #elif DEMO_NUMBER == 5
 #elif DEMO_NUMBER == 6
 #endif
@@ -28,18 +32,18 @@ void schedulerSetup();
 void schedulerUpdate();
 
 #ifdef RR
-TASK(1);
-TASK(2);
+  TASK(1);
+  TASK(2);
 
-void schedulerSetup() {}
-void schedulerUpdate() {
-  while(1) {
-    uint32_t ms = millis();
-    task1(ms);
-    task2(ms);
-    delayMicroseconds((ms + 1) * 1000 - micros());
+  void schedulerSetup() {}
+  void schedulerUpdate() {
+    while(1) {
+      uint32_t ms = millis();
+      task1(ms);
+      task2(ms);
+      delayMicroseconds((ms + 1) * 1000 - micros());
+    }
   }
-}
 #endif
 
 #ifdef SRRI
@@ -197,6 +201,44 @@ void schedulerUpdate() {
   }
 #endif
 
+#ifdef TASK_3
+  #define DS4 1 << PF7
+  #define DS3 1 << PF6
+  #define DS2 1 << PF5
+  #define DS1 1 << PF4
+
+  #define SS_A 1 << PK0
+  #define SS_B 1 << PK1
+  #define SS_C 1 << PK2
+  #define SS_D 1 << PK3
+  #define SS_E 1 << PK4
+  #define SS_F 1 << PK5
+  #define SS_G 1 << PK6
+  #define SS_DP 1 << PK7
+
+  uint16_t count = 0;
+  
+  TASK(3_counter) {
+    count += 1;
+    sleep_474(100);
+  }
+
+  uint16_t sevenSegmentToDigit[2][4] = {{DS1, DS2, DS3, DS4}, {1, 10, 100, 1000}};
+  uint8_t digitToOutput[] = {0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111};
+  TASK(3_led) {
+    static uint8_t led = 0;
+
+    uint8_t value = (count % (sevenSegmentToDigit[1][led] * 10)) / sevenSegmentToDigit[1][led];
+
+    PORTF = 0b11110000 ^ sevenSegmentToDigit[0][led];
+    PORTK = digitToOutput[value];
+
+    led++;
+    led %= 4;
+    sleep_474(2);
+  }
+#endif
+
 void setup() {
   Serial.begin(9600);
   cli();
@@ -210,12 +252,25 @@ void setup() {
   #ifdef TASK_2
     enableTimer4();
   #endif
+  #ifdef TASK_3
+    DDRK = 0xFF; // All ports used
+    DDRF = DS4 | DS3 | DS2 | DS1;
+  #endif
 
   #if DEMO_NUMBER == 2 
     tasks[0] = *task1;
     tasks[1] = *task2;
     tasks[2] = *schedule_sync;
     tasks[3] = nullptr;
+  #endif
+
+  #if DEMO_NUMBER == 4
+    tasks[0] = *task1;
+    tasks[1] = *task2;
+    tasks[2] = *task3_counter;
+    tasks[3] = *task3_led;
+    tasks[4] = *schedule_sync;
+    tasks[5] = nullptr;
   #endif
 }
 
