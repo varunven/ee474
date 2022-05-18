@@ -1,6 +1,6 @@
 #define CLOCK_RATE 16000000
 
-#define DEMO_NUMBER 4
+#define DEMO_NUMBER 3
 
 #if DEMO_NUMBER == 1
   #define RR
@@ -11,6 +11,9 @@
   #define TASK_1
   #define TASK_2
 #elif DEMO_NUMBER == 3
+  #define DDS
+  #define TASK_1
+  #define TASK_2
 #elif DEMO_NUMBER == 4
   #define SRRI
   #define TASK_1
@@ -22,10 +25,35 @@
 
 #ifdef RR
   using task = void(*)(uint32_t);
-  #define TASK(id) void task##id(uint32_t millis)
-#else
+  #define TASK(name, desc) void name(uint32_t millis)
+#endif
+#ifdef SRRI
   using task = void(*)();
-  #define TASK(id) void task##id()
+  #define TASK(name, desc) void name()
+#endif
+#ifdef DDS
+  using task = void(*)();
+  enum TaskState { READY, RUNNING, SLEEPING, DEAD };
+
+  struct TCB {
+    int id_code;
+    char desc[20];
+    int times_started;
+    TaskState state;
+    int32_t sleep_time;
+    task run;
+  };
+  uint8_t uuid = 0;
+  #define TASK(name, desc) void name();\
+    TCB name##_TCB = {\
+      uuid++,\
+      desc,\
+      0,\
+      TaskState::READY,\
+      0,\
+      *name\
+    };\
+    void name()
 #endif
 
 void schedulerSetup();
@@ -95,7 +123,7 @@ void schedulerUpdate();
     }
   }
 
-  void schedule_sync() {
+  TASK(schedule_sync, "Syncs the scheduler") {
     while (sFlag == SchedulerState::PENDING) {
       //no op
     }  
@@ -114,8 +142,136 @@ void schedulerUpdate();
   }
 #endif
 
+//data-driven scheduler
+#ifdef DDS
+  TCB* tasks[10];
+  uint8_t taskCount;
+  uint8_t currentTask;
+
+  TCB* deadTasks[10];
+  uint8_t deadTaskCount;
+
+  uint8_t get_running_task() {
+    for(uint8_t i = 0; i < 10; i++) {
+      if (tasks[i]->state == TaskState::RUNNING) {
+        return i;
+      }
+    }
+    return 0xFF;
+  }
+
+  void remove_index_from_array(TCB** array, uint8_t size, uint8_t index) {
+    for (uint8_t i = index; i < size - 1; i++) {
+      array[i] = array[i + 1];
+    }
+    array[size - 1] = nullptr;
+  }
+
+  void task_self_quit(){
+    uint8_t currentTask = get_running_task();
+
+    if (currentTask == 0xFF) {
+      Serial.println("Called task_self_quit with no running task");
+      return;
+    }
+
+    TCB* task = tasks[currentTask];
+    task->state = TaskState::DEAD;
+    remove_index_from_array(tasks, 10, taskCount--);
+
+    if (deadTaskCount == 10) {
+      Serial.println("Killed task when no dead task slots available.");
+      return;
+    }
+
+    deadTasks[deadTaskCount++] = task;
+  }
+
+  void task_start(TCB* task) {
+    uint8_t deadTaskIndex = 0xFF;
+    for (uint8_t i = 0; i < deadTaskCount; i++) {
+      if (task == deadTasks[i]) {
+        deadTaskIndex = i;
+      }
+    }
+
+    if (deadTaskIndex == 0xFF) {
+      Serial.print("Task ");
+      Serial.write(task->desc);
+      Serial.println(" not found.");
+      return;
+    }
+
+    remove_index_from_array(deadTasks, 10, deadTaskCount--);
+    task->state = TaskState::READY;
+    tasks[taskCount++] = task;
+  }
+
+  void sleep_474(int t) {
+    TCB* task = tasks[get_running_task()];
+    task->sleep_time = t;
+    task->state = TaskState::SLEEPING;
+  }
+
+  enum SchedulerState { PENDING, DONE };
+  volatile SchedulerState sFlag = SchedulerState::PENDING;
+
+  void schedulerSetup() {
+    // Initialize the timer
+    TCCR0A = (1 << WGM01); // CTC mode
+    TCCR0B = (1 << CS02) ; // 1024 Prescaler
+    OCR0A = 117; // Full period of the clock every 500Hz/2ms
+    TIMSK0 = (1 << OCIE0A); // Enable Interrupts 
+  }
+
+  ISR(TIMER0_COMPA_vect) {
+    sFlag = SchedulerState::DONE;
+  }
+
+  void schedulerUpdate() {
+    for (int i = 0; i < 10; i++) {
+      TCB* task = tasks[i];
+      if (task == nullptr) {
+        break;
+      }
+
+      if (task->state == TaskState::READY) {
+        task->state = TaskState::RUNNING;
+        task->run();
+
+        if (task->state != TaskState::SLEEPING) {
+          task->state = TaskState::READY;
+        }
+      }
+    }
+  }
+
+  TASK(schedule_sync, "Syncs the scheduler") {
+    while (sFlag == SchedulerState::PENDING) {
+      //no op
+    }  
+
+    for(int i = 0; i < 10; i++) {
+      TCB* task = tasks[i];
+      if (task == nullptr) {
+        continue;
+      }
+
+      if (task->state == TaskState::SLEEPING) {
+        task->sleep_time -= 2;
+
+        if (task->sleep_time < 2) {
+          task->state = TaskState::READY;
+        }
+      }
+    }
+
+    sFlag = SchedulerState::PENDING;
+  }
+#endif
+
 #ifdef TASK_1 
-  TASK(1) {
+  TASK(task1, "Led Flash") {
     #ifdef RR
       int on = (millis / 250) % 4;
       if (on == 0) {
@@ -143,7 +299,7 @@ void schedulerUpdate();
   void setTimer4Hertz(int hertz);
 
   int notes[] = {293, 329, 261, 130, 196};
-  TASK(2) {
+  TASK(task2, "Close Encounters") {
     #ifdef RR
       int second = (millis / 1000) % (5 + 4);
       if (second < 5) {
@@ -210,14 +366,14 @@ void schedulerUpdate();
 
   uint16_t count = 0;
   
-  TASK(3_counter) {
+  TASK(task3_counter, "Task 3 counter") {
     count += 1;
     sleep_474(100);
   }
 
   uint16_t sevenSegmentToDigit[2][4] = {{DS1, DS2, DS3, DS4}, {1, 10, 100, 1000}};
   uint8_t digitToOutput[] = {0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111};
-  TASK(3_led) {
+  TASK(task3_led, "7 seg updater") {
     static uint8_t led = 0;
 
     uint8_t value = (count % (sevenSegmentToDigit[1][led] * 10)) / sevenSegmentToDigit[1][led];
@@ -250,9 +406,16 @@ void setup() {
   #endif
 
   #if DEMO_NUMBER == 2 
-    tasks[0] = *task1;
-    tasks[1] = *task2;
+    tasks[0] = *task1_TCB;
+    tasks[1] = *task2_TCB;
     tasks[2] = *schedule_sync;
+    tasks[3] = nullptr;
+  #endif
+
+  #if DEMO_NUMBER == 3
+    tasks[0] = &task1_TCB;
+    tasks[1] = &task2_TCB;
+    tasks[2] = &schedule_sync_TCB;
     tasks[3] = nullptr;
   #endif
 
