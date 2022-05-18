@@ -206,15 +206,7 @@ void schedulerUpdate();
   #define DS3 1 << PF6
   #define DS2 1 << PF5
   #define DS1 1 << PF4
-
-  #define SS_A 1 << PK0
-  #define SS_B 1 << PK1
-  #define SS_C 1 << PK2
-  #define SS_D 1 << PK3
-  #define SS_E 1 << PK4
-  #define SS_F 1 << PK5
-  #define SS_G 1 << PK6
-  #define SS_DP 1 << PK7
+  #define DS_MASK DS4 | DS3 | DS2 | DS1
 
   uint16_t count = 0;
   
@@ -230,7 +222,7 @@ void schedulerUpdate();
 
     uint8_t value = (count % (sevenSegmentToDigit[1][led] * 10)) / sevenSegmentToDigit[1][led];
 
-    PORTF = 0b11110000 ^ sevenSegmentToDigit[0][led];
+    PORTF = DS_MASK ^ sevenSegmentToDigit[0][led];
     PORTK = digitToOutput[value];
 
     led++;
