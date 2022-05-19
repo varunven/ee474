@@ -80,9 +80,6 @@ TASK_DEF(task4_sound, "Task 4 sound");
 TASK_DEF(task4_countdown, "Task 4 countdown");
 
 #ifdef RR
-  TASK(1);
-  TASK(2);
-
   void schedulerSetup() {}
   void schedulerUpdate() {
     while(1) {
@@ -219,10 +216,10 @@ TASK_DEF(task4_countdown, "Task 4 countdown");
       Serial.print("Task ");
       Serial.write(task->desc);
       Serial.println(" not found.");
-      return;
+    } else {
+      remove_index_from_array(deadTasks, deadTaskCount--, deadTaskIndex);
     }
 
-    remove_index_from_array(deadTasks, deadTaskCount--, deadTaskIndex);
     task->state = TaskState::READY;
     TCB* sync = tasks[taskCount - 1];
     tasks[taskCount - 1] = task;
@@ -464,8 +461,8 @@ void setup() {
   #endif
 
   #if DEMO_NUMBER == 2 
-    tasks[0] = *task1_TCB;
-    tasks[1] = *task2_TCB;
+    tasks[0] = *task1;
+    tasks[1] = *task2;
     tasks[2] = *schedule_sync;
     tasks[3] = nullptr;
   #endif
@@ -493,9 +490,6 @@ void setup() {
     tasks[2] = &schedule_sync_TCB;
     tasks[3] = nullptr;
     taskCount = 3;
-    deadTasks[0] = &task4_countdown_TCB;
-    deadTasks[1] = nullptr;
-    deadTaskCount = 1;
   #endif
 }
 
