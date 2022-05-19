@@ -1,6 +1,6 @@
 #define CLOCK_RATE 16000000
 
-#define DEMO_NUMBER 5
+#define DEMO_NUMBER 6
 
 #if DEMO_NUMBER == 1
   #define RR
@@ -30,6 +30,11 @@
   #define SPEAKER
   #define SEVEN_SEGMENT
 #elif DEMO_NUMBER == 6
+  #define DDS
+  #define TASK_1
+  #define TASK_5
+  #define SPEAKER
+  #define SEVEN_SEGMENT
 #endif
 
 #ifdef RR
@@ -78,6 +83,8 @@ TASK_DEF(seven_seg_updater, "7 seg updater");
 TASK_DEF(task3_counter, "Task 3 counter");
 TASK_DEF(task4_sound, "Task 4 sound");
 TASK_DEF(task4_countdown, "Task 4 countdown");
+TASK_DEF(task5_countdown, "Task 5 countdown");
+TASK_DEF(task5_smile, "Task 5 smile");
 
 #ifdef RR
   void schedulerSetup() {}
@@ -390,8 +397,23 @@ TASK_DEF(task4_countdown, "Task 4 countdown");
 
   uint16_t sevenSegmentToDigit[2][4] = {{DS1, DS2, DS3, DS4}, {1, 10, 100, 1000}};
   uint8_t digitToOutput[] = {0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111};
+
+  #ifdef DDS
+    bool quit_7seg = false;
+  #endif
+
   TASK(seven_seg_updater) {
     static uint8_t led = 0;
+
+    #ifdef DDS
+      if (quit_7seg) {
+        task_self_quit();
+        quit_7seg = false;
+        PORTF = 0;
+        PORTK = 0;
+        return;
+      }
+    #endif
 
     uint8_t value = (display % (sevenSegmentToDigit[1][led] * 10)) / sevenSegmentToDigit[1][led];
 
@@ -442,6 +464,72 @@ TASK_DEF(task4_countdown, "Task 4 countdown");
   }
 #endif
 
+#ifdef TASK_5
+  TASK(task2) {
+    static int note = 0;
+    static int play_times = 0;
+    if (play_times == 2) {
+      task_self_quit();
+      task_start(&seven_seg_updater_TCB);
+      task_start(&task5_countdown_TCB);
+      play_times++;
+      return;
+    }
+
+    if (play_times == 4) {
+      task_self_quit();
+      task_start(&task5_smile_TCB);
+      return;
+    }
+
+    if (note == 5) {
+      setTimer4Hertz(0);
+      note = 0;
+      sleep_474(4000);
+      play_times++;
+      return;
+    }
+
+    setTimer4Hertz(notes[note]);
+    note++;
+    sleep_474(1000);
+  }
+
+  TASK(task5_countdown) {
+    static uint8_t countdown = 3;
+    if (countdown == 0) {
+      task_self_quit();
+      quit_7seg = true;
+      task_start(&task2_TCB);
+      return;
+    }
+
+    display = (countdown --) - 1;
+    sleep_474(1000);
+  }
+
+  uint8_t smile[] = {0b00001100, 0b00001001, 0b00001001, 0b00011000};
+  TASK(task5_smile) {
+    static uint8_t led = 0;
+    static uint16_t time = 0;
+
+    if (time >= 2000) {
+      task_self_quit();
+      PORTF = 0;
+      PORTK = 0;
+      return;
+    }
+
+    PORTF = (DS_MASK) ^ sevenSegmentToDigit[0][led];
+    PORTK = smile[led];
+
+    led++;
+    led %= 4;
+    time += 2;
+    sleep_474(2);
+  }
+#endif
+
 void setup() {
   Serial.begin(9600);
   cli();
@@ -487,6 +575,14 @@ void setup() {
   #if DEMO_NUMBER == 5
     tasks[0] = &task4_sound_TCB;
     tasks[1] = &seven_seg_updater_TCB;
+    tasks[2] = &schedule_sync_TCB;
+    tasks[3] = nullptr;
+    taskCount = 3;
+  #endif
+
+  #if DEMO_NUMBER == 6
+    tasks[0] = &task1_TCB;
+    tasks[1] = &task2_TCB;
     tasks[2] = &schedule_sync_TCB;
     tasks[3] = nullptr;
     taskCount = 3;
