@@ -1,35 +1,46 @@
 #define CLOCK_RATE 16000000
 
-#define DEMO_NUMBER 3
+#define DEMO_NUMBER 5
 
 #if DEMO_NUMBER == 1
   #define RR
   #define TASK_1
   #define TASK_2
+  #define SPEAKER
 #elif DEMO_NUMBER == 2
   #define SRRI
   #define TASK_1
   #define TASK_2
+  #define SPEAKER
 #elif DEMO_NUMBER == 3
   #define DDS
   #define TASK_1
   #define TASK_2
+  #define SPEAKER
 #elif DEMO_NUMBER == 4
   #define SRRI
   #define TASK_1
   #define TASK_2
   #define TASK_3
+  #define SPEAKER
+  #define SEVEN_SEGMENT
 #elif DEMO_NUMBER == 5
+  #define DDS
+  #define TASK_4
+  #define SPEAKER
+  #define SEVEN_SEGMENT
 #elif DEMO_NUMBER == 6
 #endif
 
 #ifdef RR
   using task = void(*)(uint32_t);
-  #define TASK(name, desc) void name(uint32_t millis)
+  #define TASK_DEF(name, desc) void name(uint32_t millis)
+  #define TASK(name) void name(uint32_t millis)
 #endif
 #ifdef SRRI
   using task = void(*)();
-  #define TASK(name, desc) void name()
+  #define TASK_DEF(name,desc) void name()
+  #define TASK(name) void name()
 #endif
 #ifdef DDS
   using task = void(*)();
@@ -44,7 +55,7 @@
     task run;
   };
   uint8_t uuid = 0;
-  #define TASK(name, desc) void name();\
+  #define TASK_DEF(name, desc) void name();\
     TCB name##_TCB = {\
       uuid++,\
       desc,\
@@ -52,12 +63,21 @@
       TaskState::READY,\
       0,\
       *name\
-    };\
-    void name()
+    }
+    #define TASK(name) void name()
 #endif
 
 void schedulerSetup();
 void schedulerUpdate();
+
+TASK_DEF(schedule_sync, "Syncs the scheduler");
+
+TASK_DEF(task1, "Led Flash");
+TASK_DEF(task2, "Close Encounters");
+TASK_DEF(seven_seg_updater, "7 seg updater");
+TASK_DEF(task3_counter, "Task 3 counter");
+TASK_DEF(task4_sound, "Task 4 sound");
+TASK_DEF(task4_countdown, "Task 4 countdown");
 
 #ifdef RR
   TASK(1);
@@ -123,7 +143,7 @@ void schedulerUpdate();
     }
   }
 
-  TASK(schedule_sync, "Syncs the scheduler") {
+  TASK(schedule_sync) {
     while (sFlag == SchedulerState::PENDING) {
       //no op
     }  
@@ -161,7 +181,7 @@ void schedulerUpdate();
   }
 
   void remove_index_from_array(TCB** array, uint8_t size, uint8_t index) {
-    for (uint8_t i = index; i < size - 1; i++) {
+    for (uint8_t i = index; i < size; i++) {
       array[i] = array[i + 1];
     }
     array[size - 1] = nullptr;
@@ -177,10 +197,10 @@ void schedulerUpdate();
 
     TCB* task = tasks[currentTask];
     task->state = TaskState::DEAD;
-    remove_index_from_array(tasks, 10, taskCount--);
+    remove_index_from_array(tasks, taskCount--, currentTask);
 
     if (deadTaskCount == 10) {
-      Serial.println("Killed task when no dead task slots available.");
+      Serial.println("Quit task when no dead task slots available.");
       return;
     }
 
@@ -202,9 +222,11 @@ void schedulerUpdate();
       return;
     }
 
-    remove_index_from_array(deadTasks, 10, deadTaskCount--);
+    remove_index_from_array(deadTasks, deadTaskCount--, deadTaskIndex);
     task->state = TaskState::READY;
-    tasks[taskCount++] = task;
+    TCB* sync = tasks[taskCount - 1];
+    tasks[taskCount - 1] = task;
+    tasks[taskCount++] = sync;
   }
 
   void sleep_474(int t) {
@@ -246,7 +268,7 @@ void schedulerUpdate();
     }
   }
 
-  TASK(schedule_sync, "Syncs the scheduler") {
+  TASK(schedule_sync) {
     while (sFlag == SchedulerState::PENDING) {
       //no op
     }  
@@ -271,7 +293,7 @@ void schedulerUpdate();
 #endif
 
 #ifdef TASK_1 
-  TASK(task1, "Led Flash") {
+  TASK(task1) {
     #ifdef RR
       int on = (millis / 250) % 4;
       if (on == 0) {
@@ -293,34 +315,12 @@ void schedulerUpdate();
   }
 #endif
 
-#ifdef TASK_2
+#ifdef SPEAKER
   // Sets the output rate for TIMER4
   // Input: hertz - the hertz to drive TIMER4 at. If hertz is zero, the timer is disabled.
   void setTimer4Hertz(int hertz);
 
   int notes[] = {293, 329, 261, 130, 196};
-  TASK(task2, "Close Encounters") {
-    #ifdef RR
-      int second = (millis / 1000) % (5 + 4);
-      if (second < 5) {
-        setTimer4Hertz(notes[second]);
-      } else {
-        setTimer4Hertz(0);
-      }
-    #else
-      static int note = 0;
-      if (note == 5) {
-        setTimer4Hertz(0);
-        sleep_474(4000);
-        note = 0;
-        return;
-      }
-
-      setTimer4Hertz(notes[note]);
-      note++;
-      sleep_474(1000);
-    #endif
-  }
 
   void enableTimer4() {
     // Enable the clock
@@ -357,33 +357,91 @@ void schedulerUpdate();
   }
 #endif
 
-#ifdef TASK_3
+#ifdef TASK_2
+  TASK(task2) {
+    #ifdef RR
+      int second = (millis / 1000) % (5 + 4);
+      if (second < 5) {
+        setTimer4Hertz(notes[second]);
+      } else {
+        setTimer4Hertz(0);
+      }
+    #else
+      static int note = 0;
+      if (note == 5) {
+        setTimer4Hertz(0);
+        sleep_474(4000);
+        note = 0;
+        return;
+      }
+
+      setTimer4Hertz(notes[note]);
+      note++;
+      sleep_474(1000);
+    #endif
+  }
+#endif
+
+#ifdef SEVEN_SEGMENT
   #define DS4 1 << PF7
   #define DS3 1 << PF6
   #define DS2 1 << PF5
   #define DS1 1 << PF4
   #define DS_MASK DS4 | DS3 | DS2 | DS1
 
-  uint16_t count = 0;
-  
-  TASK(task3_counter, "Task 3 counter") {
-    count += 1;
-    sleep_474(100);
-  }
+  uint16_t display = 0;
 
   uint16_t sevenSegmentToDigit[2][4] = {{DS1, DS2, DS3, DS4}, {1, 10, 100, 1000}};
   uint8_t digitToOutput[] = {0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111};
-  TASK(task3_led, "7 seg updater") {
+  TASK(seven_seg_updater) {
     static uint8_t led = 0;
 
-    uint8_t value = (count % (sevenSegmentToDigit[1][led] * 10)) / sevenSegmentToDigit[1][led];
+    uint8_t value = (display % (sevenSegmentToDigit[1][led] * 10)) / sevenSegmentToDigit[1][led];
 
-    PORTF = DS_MASK ^ sevenSegmentToDigit[0][led];
+    PORTF = (DS_MASK) ^ sevenSegmentToDigit[0][led];
     PORTK = digitToOutput[value];
 
     led++;
     led %= 4;
     sleep_474(2);
+  }
+#endif
+
+#ifdef TASK_3
+  TASK(task3_counter) {
+    display += 1;
+    sleep_474(100);
+  }
+#endif
+
+#ifdef TASK_4
+  TASK(task4_sound) {
+    static int note = 0;
+    if (note == 5) {
+      setTimer4Hertz(0);
+      note = 0;
+      task_self_quit();
+      task_start(&task4_countdown_TCB);
+      return;
+    }
+
+    setTimer4Hertz(notes[note]);
+    display = notes[note];
+    note++;
+    sleep_474(1000);
+  }
+
+  TASK(task4_countdown) {
+    static uint8_t countdown = 40;
+    if (countdown == 0) {
+      task_self_quit();
+      task_start(&task4_sound_TCB);
+      countdown = 40;
+      return;
+    }
+
+    display = countdown --;
+    sleep_474(100);
   }
 #endif
 
@@ -397,10 +455,10 @@ void setup() {
     // Task 1 setup
     DDRL |= (1 << PL0);
   #endif
-  #ifdef TASK_2
+  #ifdef SPEAKER
     enableTimer4();
   #endif
-  #ifdef TASK_3
+  #ifdef SEVEN_SEGMENT
     DDRK = 0xFF; // All ports used
     DDRF = DS4 | DS3 | DS2 | DS1;
   #endif
@@ -417,15 +475,27 @@ void setup() {
     tasks[1] = &task2_TCB;
     tasks[2] = &schedule_sync_TCB;
     tasks[3] = nullptr;
+    taskCount = 3;
   #endif
 
   #if DEMO_NUMBER == 4
     tasks[0] = *task1;
     tasks[1] = *task2;
     tasks[2] = *task3_counter;
-    tasks[3] = *task3_led;
+    tasks[3] = *seven_seg_updater;
     tasks[4] = *schedule_sync;
     tasks[5] = nullptr;
+  #endif
+
+  #if DEMO_NUMBER == 5
+    tasks[0] = &task4_sound_TCB;
+    tasks[1] = &seven_seg_updater_TCB;
+    tasks[2] = &schedule_sync_TCB;
+    tasks[3] = nullptr;
+    taskCount = 3;
+    deadTasks[0] = &task4_countdown_TCB;
+    deadTasks[1] = nullptr;
+    deadTaskCount = 1;
   #endif
 }
 
