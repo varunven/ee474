@@ -1,0 +1,160 @@
+\doxysection{lab3\+\_\+demo2.\+ino}
+\label{lab3__demo2_8ino_source}\index{lab3\_demo2/lab3\_demo2.ino@{lab3\_demo2/lab3\_demo2.ino}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001 \textcolor{comment}{/* @file   lab3\_demo2.ino}}
+\DoxyCodeLine{00002 \textcolor{comment}{ *   @author    Varun Venkatesh, Eli Orona}}
+\DoxyCodeLine{00003 \textcolor{comment}{ *   @date      22-\/May-\/2022}}
+\DoxyCodeLine{00004 \textcolor{comment}{ *   @brief   Demo \#2 of Lab 3}}
+\DoxyCodeLine{00005 \textcolor{comment}{ *   }}
+\DoxyCodeLine{00006 \textcolor{comment}{ *  Uses a SSRI to run Tasks 1 and 2 continuously}}
+\DoxyCodeLine{00007 \textcolor{comment}{ */}}
+\DoxyCodeLine{00008  }
+\DoxyCodeLine{00009 \textcolor{keyword}{using }task = void(*)();}
+\DoxyCodeLine{00010 \textcolor{keywordtype}{void} schedulerSetup();}
+\DoxyCodeLine{00011 \textcolor{keywordtype}{void} schedulerUpdate();}
+\DoxyCodeLine{00012 \textcolor{keywordtype}{void} schedule\_sync();}
+\DoxyCodeLine{00013 \textcolor{keywordtype}{void} task1();}
+\DoxyCodeLine{00014 \textcolor{keywordtype}{void} task2();}
+\DoxyCodeLine{00015 }
+\DoxyCodeLine{00017 task tasks[10];}
+\DoxyCodeLine{00018 \textcolor{keyword}{enum} TaskState \{ READY, RUNNING, SLEEPING \};}
+\DoxyCodeLine{00020 \textcolor{keyword}{static} TaskState states[10];}
+\DoxyCodeLine{00022 \textcolor{keyword}{static} \textcolor{keywordtype}{int} sleeping[10];}
+\DoxyCodeLine{00023 }
+\DoxyCodeLine{00035 \textcolor{keywordtype}{void} sleep\_474(\textcolor{keywordtype}{int} t) \{}
+\DoxyCodeLine{00036     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < 10; i++) \{}
+\DoxyCodeLine{00037         \textcolor{keywordflow}{if} (states[i] == TaskState::RUNNING) \{}
+\DoxyCodeLine{00038         sleeping[i] = t;}
+\DoxyCodeLine{00039         states[i] = TaskState::SLEEPING;}
+\DoxyCodeLine{00040         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00041         \}}
+\DoxyCodeLine{00042     \}}
+\DoxyCodeLine{00043 \}}
+\DoxyCodeLine{00044 }
+\DoxyCodeLine{00045 \textcolor{keyword}{enum} SchedulerState \{ PENDING, DONE \};}
+\DoxyCodeLine{00046 \textcolor{keyword}{volatile} SchedulerState sFlag = SchedulerState::PENDING;}
+\DoxyCodeLine{00047 }
+\DoxyCodeLine{00048 }
+\DoxyCodeLine{00052 \textcolor{keywordtype}{void} schedulerSetup() \{}
+\DoxyCodeLine{00053     \textcolor{comment}{// Initialize the timer}}
+\DoxyCodeLine{00054     TCCR0A = (1 << WGM01); \textcolor{comment}{// CTC mode}}
+\DoxyCodeLine{00055     TCCR0B = (1 << CS02) ; \textcolor{comment}{// 1024 Prescaler}}
+\DoxyCodeLine{00056     OCR0A = 117; \textcolor{comment}{// Full period of the clock every 500Hz/2ms}}
+\DoxyCodeLine{00057     TIMSK0 = (1 << OCIE0A); \textcolor{comment}{// Enable Interrupts }}
+\DoxyCodeLine{00058 \}}
+\DoxyCodeLine{00059 }
+\DoxyCodeLine{00063 ISR(TIMER0\_COMPA\_vect) \{}
+\DoxyCodeLine{00064     sFlag = SchedulerState::DONE;}
+\DoxyCodeLine{00065 \}}
+\DoxyCodeLine{00066 }
+\DoxyCodeLine{00073 \textcolor{keywordtype}{void} schedulerUpdate() \{}
+\DoxyCodeLine{00074     \textcolor{keywordflow}{for} (\textcolor{keywordtype}{int} i = 0; i < 10; i++) \{}
+\DoxyCodeLine{00075         \textcolor{keywordflow}{if} (tasks[i] == \textcolor{keyword}{nullptr}) \{}
+\DoxyCodeLine{00076         \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00077         \}}
+\DoxyCodeLine{00078         \textcolor{keywordflow}{if} (states[i] == TaskState::READY) \{}
+\DoxyCodeLine{00079         states[i] = TaskState::RUNNING;}
+\DoxyCodeLine{00080         tasks[i]();}
+\DoxyCodeLine{00081         \textcolor{keywordflow}{if} (states[i] != TaskState::SLEEPING) \{}
+\DoxyCodeLine{00082             states[i] = TaskState::READY;}
+\DoxyCodeLine{00083         \}}
+\DoxyCodeLine{00084         \}}
+\DoxyCodeLine{00085     \}}
+\DoxyCodeLine{00086 \}}
+\DoxyCodeLine{00087 }
+\DoxyCodeLine{00094 \textcolor{keywordtype}{void} schedule\_sync() \{}
+\DoxyCodeLine{00095     \textcolor{keywordflow}{while} (sFlag == SchedulerState::PENDING) \{}
+\DoxyCodeLine{00096         \textcolor{comment}{//no op}}
+\DoxyCodeLine{00097     \}}
+\DoxyCodeLine{00098     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < 10; i++) \{}
+\DoxyCodeLine{00099         \textcolor{keywordflow}{if} (states[i] == TaskState::SLEEPING) \{}
+\DoxyCodeLine{00100         sleeping[i] -\/= 2;}
+\DoxyCodeLine{00101         \textcolor{keywordflow}{if} (sleeping[i] < 2) \{}
+\DoxyCodeLine{00102             states[i] = TaskState::READY;}
+\DoxyCodeLine{00103         \}}
+\DoxyCodeLine{00104         \}}
+\DoxyCodeLine{00105     \}}
+\DoxyCodeLine{00106     sFlag = SchedulerState::PENDING;}
+\DoxyCodeLine{00107 \}}
+\DoxyCodeLine{00108 }
+\DoxyCodeLine{00109 }
+\DoxyCodeLine{00117 \textcolor{keywordtype}{void} task1() \{}
+\DoxyCodeLine{00118   \textcolor{keywordtype}{bool} on = PORTL \& (1 << PL0);}
+\DoxyCodeLine{00119   \textcolor{keywordflow}{if} (on) \{}
+\DoxyCodeLine{00120     PORTL \&= \string~(1 << PL0);}
+\DoxyCodeLine{00121     sleep\_474(750);}
+\DoxyCodeLine{00122   \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00123     PORTL |= (1 << PL0);}
+\DoxyCodeLine{00124     sleep\_474(250);}
+\DoxyCodeLine{00125   \}}
+\DoxyCodeLine{00126 \}}
+\DoxyCodeLine{00127 }
+\DoxyCodeLine{00128 \textcolor{comment}{// Sets the output rate for TIMER4}}
+\DoxyCodeLine{00129 \textcolor{comment}{// Input: hertz -\/ the hertz to drive TIMER4 at. If hertz is zero, the timer is disabled.}}
+\DoxyCodeLine{00130 \textcolor{keywordtype}{void} setTimer4Hertz(\textcolor{keywordtype}{int} hertz);}
+\DoxyCodeLine{00131 \textcolor{keywordtype}{int} notes[] = \{293, 329, 261, 130, 196\};}
+\DoxyCodeLine{00132 }
+\DoxyCodeLine{00137 \textcolor{keywordtype}{void} enableTimer4() \{}
+\DoxyCodeLine{00138     \textcolor{comment}{// Enable the clock}}
+\DoxyCodeLine{00139     PRR1 \&= \string~(1 << PRTIM4);}
+\DoxyCodeLine{00140     \textcolor{comment}{// Enable the output pin}}
+\DoxyCodeLine{00141     DDRH |= 1 << PH3;}
+\DoxyCodeLine{00142     \textcolor{comment}{// Clear the timer registers}}
+\DoxyCodeLine{00143     TCCR4A = 0;}
+\DoxyCodeLine{00144     TCCR4B = 0;}
+\DoxyCodeLine{00145     \textcolor{comment}{// turn on CTC mode}}
+\DoxyCodeLine{00146     TCCR4B |= (1 << WGM12);}
+\DoxyCodeLine{00147     \textcolor{comment}{// Set CS10 bit for a prescaler of 1}}
+\DoxyCodeLine{00148     TCCR4B |= (1 << CS10);}
+\DoxyCodeLine{00149     \textcolor{comment}{// Enable output on PH3}}
+\DoxyCodeLine{00150     TCCR4A |= 1 << COM4A0;}
+\DoxyCodeLine{00151     \textcolor{comment}{// Clear the timer counter}}
+\DoxyCodeLine{00152     TCNT4 = 0;}
+\DoxyCodeLine{00153 \}}
+\DoxyCodeLine{00154 }
+\DoxyCodeLine{00155 }
+\DoxyCodeLine{00163 \textcolor{keywordtype}{void} setTimer4Hertz(\textcolor{keywordtype}{int} hertz) \{}
+\DoxyCodeLine{00164     \textcolor{keywordflow}{if} (hertz == 0) \{}
+\DoxyCodeLine{00165         \textcolor{comment}{// Disable the timer output}}
+\DoxyCodeLine{00166         TCCR4A \&= \string~(1 << COM4A0);}
+\DoxyCodeLine{00167     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00168         \textcolor{comment}{// Make sure the timer is enabled}}
+\DoxyCodeLine{00169         TCCR4A |= 1 << COM4A0;}
+\DoxyCodeLine{00170         \textcolor{comment}{// Set the CTC value based on the hertz. Multiplying by two because the clock toggles, and so the value for the ORC4A needs to be toggled twice to be one cycle.}}
+\DoxyCodeLine{00171         OCR4A = 16000000/(hertz * 2);}
+\DoxyCodeLine{00172     \}}
+\DoxyCodeLine{00173 \}}
+\DoxyCodeLine{00174 }
+\DoxyCodeLine{00184 \textcolor{keywordtype}{void} task2() \{}
+\DoxyCodeLine{00185   \textcolor{keyword}{static} \textcolor{keywordtype}{int} note = 0;}
+\DoxyCodeLine{00186   \textcolor{keywordflow}{if} (note == 5) \{}
+\DoxyCodeLine{00187     setTimer4Hertz(0);}
+\DoxyCodeLine{00188     sleep\_474(4000);}
+\DoxyCodeLine{00189     note = 0;}
+\DoxyCodeLine{00190     \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00191   \}}
+\DoxyCodeLine{00192   setTimer4Hertz(notes[note]);}
+\DoxyCodeLine{00193   note++;}
+\DoxyCodeLine{00194   sleep\_474(1000);}
+\DoxyCodeLine{00195 \}}
+\DoxyCodeLine{00196 }
+\DoxyCodeLine{00203 \textcolor{keywordtype}{void} setup() \{}
+\DoxyCodeLine{00204     Serial.begin(9600);}
+\DoxyCodeLine{00205     cli();}
+\DoxyCodeLine{00206     schedulerSetup();}
+\DoxyCodeLine{00207     sei();}
+\DoxyCodeLine{00208     \textcolor{comment}{// Task 1 setup}}
+\DoxyCodeLine{00209     DDRL |= (1 << PL0);}
+\DoxyCodeLine{00210     enableTimer4();}
+\DoxyCodeLine{00211     tasks[0] = *task1;}
+\DoxyCodeLine{00212     tasks[1] = *task2;}
+\DoxyCodeLine{00213     tasks[2] = *schedule\_sync;}
+\DoxyCodeLine{00214     tasks[3] = \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00215 \}}
+\DoxyCodeLine{00216 }
+\DoxyCodeLine{00224 \textcolor{keywordtype}{void} loop() \{}
+\DoxyCodeLine{00225   schedulerUpdate();}
+\DoxyCodeLine{00226 \}}
+
+\end{DoxyCode}

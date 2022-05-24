@@ -1,0 +1,102 @@
+\doxysection{lab3\+\_\+demo1.\+ino}
+\label{lab3__demo1_8ino_source}\index{lab3\_demo1/lab3\_demo1.ino@{lab3\_demo1/lab3\_demo1.ino}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001 \textcolor{comment}{/* }}
+\DoxyCodeLine{00002 \textcolor{comment}{ * @file   lab3\_demo1.ino}}
+\DoxyCodeLine{00003 \textcolor{comment}{ *   @author    Varun Venkatesh, Eli Orona}}
+\DoxyCodeLine{00004 \textcolor{comment}{ *   @date      22-\/May-\/2022}}
+\DoxyCodeLine{00005 \textcolor{comment}{ *   @brief   Demo \#1 of Lab 3}}
+\DoxyCodeLine{00006 \textcolor{comment}{ *   }}
+\DoxyCodeLine{00007 \textcolor{comment}{ *  Uses a Round Robin Scheduler to run two tasks (Task 1 and Task 2) concurrently infinitely.}}
+\DoxyCodeLine{00008 \textcolor{comment}{ */}}
+\DoxyCodeLine{00009 }
+\DoxyCodeLine{00010 }
+\DoxyCodeLine{00011 \textcolor{keyword}{using }task = void(*)(uint32\_t);}
+\DoxyCodeLine{00012 \textcolor{keywordtype}{void} schedulerSetup();}
+\DoxyCodeLine{00013 \textcolor{keywordtype}{void} schedulerUpdate();}
+\DoxyCodeLine{00014 \textcolor{keywordtype}{void} schedule\_sync(uint32\_t millis);}
+\DoxyCodeLine{00015 \textcolor{keywordtype}{void} task1(uint32\_t millis);}
+\DoxyCodeLine{00016 \textcolor{keywordtype}{void} task2(uint32\_t millis);}
+\DoxyCodeLine{00017 }
+\DoxyCodeLine{00024 \textcolor{keywordtype}{void} schedulerSetup() \{\}}
+\DoxyCodeLine{00025 }
+\DoxyCodeLine{00033 \textcolor{keywordtype}{void} schedulerUpdate() \{}
+\DoxyCodeLine{00034     \textcolor{keywordflow}{while}(1) \{}
+\DoxyCodeLine{00035         uint32\_t ms = millis();}
+\DoxyCodeLine{00036         task1(ms);}
+\DoxyCodeLine{00037         task2(ms);}
+\DoxyCodeLine{00038         delayMicroseconds((ms + 1) * 1000 -\/ micros());}
+\DoxyCodeLine{00039     \}}
+\DoxyCodeLine{00040 \}}
+\DoxyCodeLine{00041 }
+\DoxyCodeLine{00042 }
+\DoxyCodeLine{00050 \textcolor{keywordtype}{void} task1(uint32\_t millis) \{}
+\DoxyCodeLine{00051   \textcolor{keywordtype}{int} on = (millis / 250) \% 4;}
+\DoxyCodeLine{00052   \textcolor{keywordflow}{if} (on == 0) \{}
+\DoxyCodeLine{00053     PORTL |= (1 << PL0);}
+\DoxyCodeLine{00054   \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00055     PORTL \&= \string~(1 << PL0);}
+\DoxyCodeLine{00056   \}}
+\DoxyCodeLine{00057 \}}
+\DoxyCodeLine{00058 }
+\DoxyCodeLine{00059 \textcolor{comment}{// Sets the output rate for TIMER4}}
+\DoxyCodeLine{00060 \textcolor{comment}{// Input: hertz -\/ the hertz to drive TIMER4 at. If hertz is zero, the timer is disabled.}}
+\DoxyCodeLine{00061 \textcolor{keywordtype}{void} setTimer4Hertz(\textcolor{keywordtype}{int} hertz);}
+\DoxyCodeLine{00062 \textcolor{keywordtype}{int} notes[] = \{293, 329, 261, 130, 196\};}
+\DoxyCodeLine{00063 }
+\DoxyCodeLine{00070 \textcolor{keywordtype}{void} enableTimer4() \{}
+\DoxyCodeLine{00071     \textcolor{comment}{// Enable the clock}}
+\DoxyCodeLine{00072     PRR1 \&= \string~(1 << PRTIM4);}
+\DoxyCodeLine{00073     \textcolor{comment}{// Enable the output pin}}
+\DoxyCodeLine{00074     DDRH |= 1 << PH3;}
+\DoxyCodeLine{00075     \textcolor{comment}{// Clear the timer registers}}
+\DoxyCodeLine{00076     TCCR4A = 0;}
+\DoxyCodeLine{00077     TCCR4B = 0;}
+\DoxyCodeLine{00078     \textcolor{comment}{// turn on CTC mode}}
+\DoxyCodeLine{00079     TCCR4B |= (1 << WGM12);}
+\DoxyCodeLine{00080     \textcolor{comment}{// Set CS10 bit for a prescaler of 1}}
+\DoxyCodeLine{00081     TCCR4B |= (1 << CS10);}
+\DoxyCodeLine{00082     \textcolor{comment}{// Enable output on PH3}}
+\DoxyCodeLine{00083     TCCR4A |= 1 << COM4A0;}
+\DoxyCodeLine{00084     \textcolor{comment}{// Clear the timer counter}}
+\DoxyCodeLine{00085     TCNT4 = 0;}
+\DoxyCodeLine{00086 \}}
+\DoxyCodeLine{00087 }
+\DoxyCodeLine{00097 \textcolor{keywordtype}{void} setTimer4Hertz(\textcolor{keywordtype}{int} hertz) \{}
+\DoxyCodeLine{00098     \textcolor{keywordflow}{if} (hertz == 0) \{}
+\DoxyCodeLine{00099         \textcolor{comment}{// Disable the timer output}}
+\DoxyCodeLine{00100         TCCR4A \&= \string~(1 << COM4A0);}
+\DoxyCodeLine{00101     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00102         \textcolor{comment}{// Make sure the timer is enabled}}
+\DoxyCodeLine{00103         TCCR4A |= 1 << COM4A0;}
+\DoxyCodeLine{00104         \textcolor{comment}{// Set the CTC value based on the hertz. Multiplying by two because the clock toggles, and so the value for the ORC4A needs to be toggled twice to be one cycle.}}
+\DoxyCodeLine{00105         OCR4A = 16000000/(hertz * 2);}
+\DoxyCodeLine{00106     \}}
+\DoxyCodeLine{00107 \}}
+\DoxyCodeLine{00108 }
+\DoxyCodeLine{00109 }
+\DoxyCodeLine{00118 \textcolor{keywordtype}{void} task2(uint32\_t millis) \{}
+\DoxyCodeLine{00119         \textcolor{keywordtype}{int} second = (millis / 1000) \% (5 + 4);}
+\DoxyCodeLine{00120         \textcolor{keywordflow}{if} (second < 5) \{}
+\DoxyCodeLine{00121         setTimer4Hertz(notes[second]);}
+\DoxyCodeLine{00122         \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00123         setTimer4Hertz(0);}
+\DoxyCodeLine{00124         \}}
+\DoxyCodeLine{00125 \}}
+\DoxyCodeLine{00126 }
+\DoxyCodeLine{00131 \textcolor{keywordtype}{void} setup() \{}
+\DoxyCodeLine{00132     Serial.begin(9600);}
+\DoxyCodeLine{00133     cli();}
+\DoxyCodeLine{00134     schedulerSetup();}
+\DoxyCodeLine{00135     sei();}
+\DoxyCodeLine{00136     \textcolor{comment}{// Task 1 setup}}
+\DoxyCodeLine{00137     DDRL |= (1 << PL0);}
+\DoxyCodeLine{00138     enableTimer4();}
+\DoxyCodeLine{00139 \}}
+\DoxyCodeLine{00140 }
+\DoxyCodeLine{00148 \textcolor{keywordtype}{void} loop() \{}
+\DoxyCodeLine{00149   schedulerUpdate();}
+\DoxyCodeLine{00150 \}}
+
+\end{DoxyCode}

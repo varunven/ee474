@@ -1,0 +1,803 @@
+\doxysection{lab3\+\_\+demo3/lab3\+\_\+demo3.ino File Reference}
+\label{lab3__demo3_8ino}\index{lab3\_demo3/lab3\_demo3.ino@{lab3\_demo3/lab3\_demo3.ino}}
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \textbf{ TCB}
+\begin{DoxyCompactList}\small\item\em This is a struct that keeps track of unique tasks and their states. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+using \textbf{ task} = void($\ast$)()
+\end{DoxyCompactItemize}
+\doxysubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \textbf{ Task\+State} \{ \textbf{ READY}
+, \textbf{ RUNNING}
+, \textbf{ SLEEPING}
+, \textbf{ DEAD}
+ \}
+\item 
+enum \textbf{ Scheduler\+State} \{ \textbf{ PENDING}
+, \textbf{ DONE}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ scheduler\+Setup} ()
+\begin{DoxyCompactList}\small\item\em Sets up the scheduler to prepare for the tasks. \end{DoxyCompactList}\item 
+void \textbf{ scheduler\+Update} ()
+\begin{DoxyCompactList}\small\item\em Updates the scheduler. \end{DoxyCompactList}\item 
+void \textbf{ schedule\+\_\+sync} ()
+\begin{DoxyCompactList}\small\item\em Syncs the scheduler. \end{DoxyCompactList}\item 
+void \textbf{ task1} ()
+\begin{DoxyCompactList}\small\item\em Task1 that flashes an LED every 250 ms. \end{DoxyCompactList}\item 
+void \textbf{ task2} ()
+\begin{DoxyCompactList}\small\item\em Plays a theme on the board. \end{DoxyCompactList}\item 
+void \textbf{ seven\+\_\+seg\+\_\+updater} ()
+\item 
+uint8\+\_\+t \textbf{ get\+\_\+running\+\_\+task} ()
+\begin{DoxyCompactList}\small\item\em Gets the currently running task. \end{DoxyCompactList}\item 
+void \textbf{ remove\+\_\+index\+\_\+from\+\_\+array} (\textbf{ TCB} $\ast$$\ast$array, uint8\+\_\+t size, uint8\+\_\+t index)
+\begin{DoxyCompactList}\small\item\em Removes a task from the array. \end{DoxyCompactList}\item 
+void \textbf{ task\+\_\+self\+\_\+quit} ()
+\begin{DoxyCompactList}\small\item\em quits the current task \end{DoxyCompactList}\item 
+void \textbf{ task\+\_\+start} (\textbf{ TCB} $\ast$\textbf{ task})
+\begin{DoxyCompactList}\small\item\em Starts a task. \end{DoxyCompactList}\item 
+void \textbf{ sleep\+\_\+474} (int t)
+\begin{DoxyCompactList}\small\item\em Sets a task state to sleeping. \end{DoxyCompactList}\item 
+\textbf{ ISR} (TIMER0\+\_\+\+COMPA\+\_\+vect)
+\begin{DoxyCompactList}\small\item\em Interrupt Service Routine. \end{DoxyCompactList}\item 
+void \textbf{ set\+Timer4\+Hertz} (int hertz)
+\begin{DoxyCompactList}\small\item\em Sets the timer. \end{DoxyCompactList}\item 
+void \textbf{ enable\+Timer4} ()
+\begin{DoxyCompactList}\small\item\em Enables the timer on the board. \end{DoxyCompactList}\item 
+void \textbf{ setup} ()
+\begin{DoxyCompactList}\small\item\em Standard setup Arduino function. \end{DoxyCompactList}\item 
+void \textbf{ loop} ()
+\begin{DoxyCompactList}\small\item\em Standard loop Arduino function. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+uint8\+\_\+t \textbf{ uuid} = 0
+\item 
+\textbf{ TCB} \textbf{ schedule\+\_\+sync\+\_\+\+TCB} = \{ \textbf{ uuid}++, \char`\"{}Syncs the scheduler\char`\"{}, 0, Task\+State\+::\+READY, 0, $\ast$\textbf{ schedule\+\_\+sync}\}
+\item 
+\textbf{ TCB} \textbf{ task1\+\_\+\+TCB} = \{ \textbf{ uuid}++, \char`\"{}Led Flash\char`\"{}, 0, Task\+State\+::\+READY, 0, $\ast$\textbf{ task1}\}
+\item 
+\textbf{ TCB} \textbf{ task2\+\_\+\+TCB} = \{ \textbf{ uuid}++, \char`\"{}Close Encounters\char`\"{}, 0, Task\+State\+::\+READY, 0, $\ast$\textbf{ task2}\}
+\item 
+\textbf{ TCB} \textbf{ seven\+\_\+seg\+\_\+updater\+\_\+\+TCB} = \{ \textbf{ uuid}++, \char`\"{}7 seg updater\char`\"{}, 0, Task\+State\+::\+READY, 0, $\ast$\textbf{ seven\+\_\+seg\+\_\+updater}\}
+\item 
+\textbf{ TCB} $\ast$ \textbf{ tasks} [10]
+\begin{DoxyCompactList}\small\item\em Array of tasks represented by \doxyref{TCB}{p.}{struct_t_c_b} struct. \end{DoxyCompactList}\item 
+uint8\+\_\+t \textbf{ task\+Count}
+\item 
+uint8\+\_\+t \textbf{ current\+Task}
+\item 
+\textbf{ TCB} $\ast$ \textbf{ dead\+Tasks} [10]
+\begin{DoxyCompactList}\small\item\em Array of dead tasks. \end{DoxyCompactList}\item 
+uint8\+\_\+t \textbf{ dead\+Task\+Count}
+\item 
+volatile \textbf{ Scheduler\+State} \textbf{ s\+Flag} = \textbf{ Scheduler\+State\+::\+PENDING}
+\item 
+int \textbf{ notes} [$\,$] = \{293, 329, 261, 130, 196\}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Typedef Documentation}
+\mbox{\label{lab3__demo3_8ino_a57e1dc6710e5ab149ea749fa9520c928}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!task@{task}}
+\index{task@{task}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{task}
+{\footnotesize\ttfamily using \textbf{ task} =  void($\ast$)()}
+
+
+
+Definition at line \textbf{ 9} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+
+\doxysubsection{Enumeration Type Documentation}
+\mbox{\label{lab3__demo3_8ino_ab270c311360e758658276bf944d00f73}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!SchedulerState@{SchedulerState}}
+\index{SchedulerState@{SchedulerState}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{SchedulerState}
+{\footnotesize\ttfamily enum \textbf{ Scheduler\+State}}
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PENDING@{PENDING}!lab3\_demo3.ino@{lab3\_demo3.ino}}\index{lab3\_demo3.ino@{lab3\_demo3.ino}!PENDING@{PENDING}}}\mbox{\label{lab3__demo3_8ino_ab270c311360e758658276bf944d00f73a1869818fd53ff519eb8e429301bdff73}} 
+PENDING&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DONE@{DONE}!lab3\_demo3.ino@{lab3\_demo3.ino}}\index{lab3\_demo3.ino@{lab3\_demo3.ino}!DONE@{DONE}}}\mbox{\label{lab3__demo3_8ino_ab270c311360e758658276bf944d00f73a9c954bcf443428c80b0f107b3bc48749}} 
+DONE&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 138} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00138 \{ PENDING, DONE \};}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_a724f9ce2351c125b3b7f6c7923822bce}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!TaskState@{TaskState}}
+\index{TaskState@{TaskState}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{TaskState}
+{\footnotesize\ttfamily enum \textbf{ Task\+State}}
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{READY@{READY}!lab3\_demo3.ino@{lab3\_demo3.ino}}\index{lab3\_demo3.ino@{lab3\_demo3.ino}!READY@{READY}}}\mbox{\label{lab3__demo3_8ino_a724f9ce2351c125b3b7f6c7923822bcea6564f2f3e15be06b670547bbcaaf0798}} 
+READY&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{RUNNING@{RUNNING}!lab3\_demo3.ino@{lab3\_demo3.ino}}\index{lab3\_demo3.ino@{lab3\_demo3.ino}!RUNNING@{RUNNING}}}\mbox{\label{lab3__demo3_8ino_a724f9ce2351c125b3b7f6c7923822bcea1061be6c3fb88d32829cba6f6b2be304}} 
+RUNNING&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SLEEPING@{SLEEPING}!lab3\_demo3.ino@{lab3\_demo3.ino}}\index{lab3\_demo3.ino@{lab3\_demo3.ino}!SLEEPING@{SLEEPING}}}\mbox{\label{lab3__demo3_8ino_a724f9ce2351c125b3b7f6c7923822bcea488282601451a751e0f0e770b15d4235}} 
+SLEEPING&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DEAD@{DEAD}!lab3\_demo3.ino@{lab3\_demo3.ino}}\index{lab3\_demo3.ino@{lab3\_demo3.ino}!DEAD@{DEAD}}}\mbox{\label{lab3__demo3_8ino_a724f9ce2351c125b3b7f6c7923822bcea11fd9ca455f92c69c084484d5cd803c2}} 
+DEAD&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line \textbf{ 10} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00010 \{ READY, RUNNING, SLEEPING, DEAD \};}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\label{lab3__demo3_8ino_a5ec326a238fa0e15e084d437b742e9b8}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!enableTimer4@{enableTimer4}}
+\index{enableTimer4@{enableTimer4}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{enableTimer4()}
+{\footnotesize\ttfamily void enable\+Timer4 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Enables the timer on the board. 
+
+
+
+Definition at line \textbf{ 231} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00231                     \{}
+\DoxyCodeLine{00232     \textcolor{comment}{// Enable the clock}}
+\DoxyCodeLine{00233     PRR1 \&= \string~(1 << PRTIM4);}
+\DoxyCodeLine{00234     \textcolor{comment}{// Enable the output pin}}
+\DoxyCodeLine{00235     DDRH |= 1 << PH3;}
+\DoxyCodeLine{00236     \textcolor{comment}{// Clear the timer registers}}
+\DoxyCodeLine{00237     TCCR4A = 0;}
+\DoxyCodeLine{00238     TCCR4B = 0;}
+\DoxyCodeLine{00239     \textcolor{comment}{// turn on CTC mode}}
+\DoxyCodeLine{00240     TCCR4B |= (1 << WGM12);}
+\DoxyCodeLine{00241     \textcolor{comment}{// Set CS10 bit for a prescaler of 1}}
+\DoxyCodeLine{00242     TCCR4B |= (1 << CS10);}
+\DoxyCodeLine{00243     \textcolor{comment}{// Enable output on PH3}}
+\DoxyCodeLine{00244     TCCR4A |= 1 << COM4A0;}
+\DoxyCodeLine{00245     \textcolor{comment}{// Clear the timer counter}}
+\DoxyCodeLine{00246     TCNT4 = 0;}
+\DoxyCodeLine{00247 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_a0b7ac8f53afaf159509f08b6a2d093ad}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!get\_running\_task@{get\_running\_task}}
+\index{get\_running\_task@{get\_running\_task}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{get\_running\_task()}
+{\footnotesize\ttfamily uint8\+\_\+t get\+\_\+running\+\_\+task (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Gets the currently running task. 
+
+Identifies and returns the index of which task is currently running in the tasks array
+
+\begin{DoxyReturn}{Returns}
+the index of which task is currently running in the tasks array 
+\end{DoxyReturn}
+
+
+Definition at line \textbf{ 48} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00048                            \{}
+\DoxyCodeLine{00049     \textcolor{keywordflow}{for}(uint8\_t i = 0; i < 10; i++) \{}
+\DoxyCodeLine{00050         \textcolor{keywordflow}{if} (tasks[i]-\/>state == TaskState::RUNNING) \{}
+\DoxyCodeLine{00051         \textcolor{keywordflow}{return} i;}
+\DoxyCodeLine{00052         \}}
+\DoxyCodeLine{00053     \}}
+\DoxyCodeLine{00054     \textcolor{keywordflow}{return} 0xFF;}
+\DoxyCodeLine{00055 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_aec43762dc86e029b395d4e5819192c2d}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!ISR@{ISR}}
+\index{ISR@{ISR}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{ISR()}
+{\footnotesize\ttfamily ISR (\begin{DoxyParamCaption}\item[{TIMER0\+\_\+\+COMPA\+\_\+vect}]{ }\end{DoxyParamCaption})}
+
+
+
+Interrupt Service Routine. 
+
+
+
+Definition at line \textbf{ 155} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00155                        \{}
+\DoxyCodeLine{00156     sFlag = SchedulerState::DONE;}
+\DoxyCodeLine{00157 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_afe461d27b9c48d5921c00d521181f12f}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!loop@{loop}}
+\index{loop@{loop}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{loop()}
+{\footnotesize\ttfamily void loop (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Standard loop Arduino function. 
+
+Calls the scheduler\+Update function perpetually
+
+\begin{DoxySeeAlso}{See also}
+\doxyref{scheduler\+Update}{p.}{lab3__demo3_8ino_a0f82cef357638ee0d8363f64578fdb50} 
+\end{DoxySeeAlso}
+
+
+Definition at line \textbf{ 318} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00318             \{}
+\DoxyCodeLine{00319   schedulerUpdate();}
+\DoxyCodeLine{00320 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_ae9e7f59e9bbb5c0fb52e69c2cd055a78}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!remove\_index\_from\_array@{remove\_index\_from\_array}}
+\index{remove\_index\_from\_array@{remove\_index\_from\_array}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{remove\_index\_from\_array()}
+{\footnotesize\ttfamily void remove\+\_\+index\+\_\+from\+\_\+array (\begin{DoxyParamCaption}\item[{\textbf{ TCB} $\ast$$\ast$}]{array,  }\item[{uint8\+\_\+t}]{size,  }\item[{uint8\+\_\+t}]{index }\end{DoxyParamCaption})}
+
+
+
+Removes a task from the array. 
+
+Uses {\ttfamily index} to remove a specific task from {\ttfamily array} with length equal to {\ttfamily size} 
+
+
+\begin{DoxyParams}{Parameters}
+{\em array} & \\
+\hline
+{\em size} & \\
+\hline
+{\em index} & \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \textbf{ 66} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00066                                                                        \{}
+\DoxyCodeLine{00067     \textcolor{keywordflow}{for} (uint8\_t i = index; i < size; i++) \{}
+\DoxyCodeLine{00068         array[i] = array[i + 1];}
+\DoxyCodeLine{00069     \}}
+\DoxyCodeLine{00070     array[size -\/ 1] = \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00071 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_aa795a3f5ae7c3378d219ad1ca83a282d}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!schedule\_sync@{schedule\_sync}}
+\index{schedule\_sync@{schedule\_sync}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{schedule\_sync()}
+{\footnotesize\ttfamily void schedule\+\_\+sync (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Syncs the scheduler. 
+
+Uses the current value of s\+Flag boolean to change the amount of time each task still has to sleep 
+
+Definition at line \textbf{ 185} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00185                      \{}
+\DoxyCodeLine{00186     \textcolor{keywordflow}{while} (sFlag == SchedulerState::PENDING) \{}
+\DoxyCodeLine{00187         \textcolor{comment}{//no op}}
+\DoxyCodeLine{00188     \}}
+\DoxyCodeLine{00189     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < 10; i++) \{}
+\DoxyCodeLine{00190         TCB* task = tasks[i];}
+\DoxyCodeLine{00191         \textcolor{keywordflow}{if} (task == \textcolor{keyword}{nullptr}) \{}
+\DoxyCodeLine{00192         \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00193         \}}
+\DoxyCodeLine{00194         \textcolor{keywordflow}{if} (task-\/>state == TaskState::SLEEPING) \{}
+\DoxyCodeLine{00195         task-\/>sleep\_time -\/= 2;}
+\DoxyCodeLine{00196         \textcolor{keywordflow}{if} (task-\/>sleep\_time < 2) \{}
+\DoxyCodeLine{00197             task-\/>state = TaskState::READY;}
+\DoxyCodeLine{00198         \}}
+\DoxyCodeLine{00199         \}}
+\DoxyCodeLine{00200     \}}
+\DoxyCodeLine{00201     sFlag = SchedulerState::PENDING;}
+\DoxyCodeLine{00202 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_a885c6f1d325cfbd176227daded4ca3bd}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!schedulerSetup@{schedulerSetup}}
+\index{schedulerSetup@{schedulerSetup}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{schedulerSetup()}
+{\footnotesize\ttfamily void scheduler\+Setup (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Sets up the scheduler to prepare for the tasks. 
+
+
+
+Definition at line \textbf{ 144} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00144                       \{}
+\DoxyCodeLine{00145     \textcolor{comment}{// Initialize the timer}}
+\DoxyCodeLine{00146     TCCR0A = (1 << WGM01); \textcolor{comment}{// CTC mode}}
+\DoxyCodeLine{00147     TCCR0B = (1 << CS02) ; \textcolor{comment}{// 1024 Prescaler}}
+\DoxyCodeLine{00148     OCR0A = 117; \textcolor{comment}{// Full period of the clock every 500Hz/2ms}}
+\DoxyCodeLine{00149     TIMSK0 = (1 << OCIE0A); \textcolor{comment}{// Enable Interrupts }}
+\DoxyCodeLine{00150 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_a0f82cef357638ee0d8363f64578fdb50}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!schedulerUpdate@{schedulerUpdate}}
+\index{schedulerUpdate@{schedulerUpdate}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{schedulerUpdate()}
+{\footnotesize\ttfamily void scheduler\+Update (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Updates the scheduler. 
+
+For each alive task in the task array, updates the state to RUNNING or READY 
+
+Definition at line \textbf{ 164} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00164                        \{}
+\DoxyCodeLine{00165     \textcolor{keywordflow}{for} (\textcolor{keywordtype}{int} i = 0; i < 10; i++) \{}
+\DoxyCodeLine{00166         TCB* task = tasks[i];}
+\DoxyCodeLine{00167         \textcolor{keywordflow}{if} (task == \textcolor{keyword}{nullptr}) \{}
+\DoxyCodeLine{00168         \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00169         \}}
+\DoxyCodeLine{00170         \textcolor{keywordflow}{if} (task-\/>state == TaskState::READY) \{}
+\DoxyCodeLine{00171         task-\/>state = TaskState::RUNNING;}
+\DoxyCodeLine{00172         task-\/>run();}
+\DoxyCodeLine{00173         \textcolor{keywordflow}{if} (task-\/>state != TaskState::SLEEPING) \{}
+\DoxyCodeLine{00174             task-\/>state = TaskState::READY;}
+\DoxyCodeLine{00175         \}}
+\DoxyCodeLine{00176         \}}
+\DoxyCodeLine{00177     \}}
+\DoxyCodeLine{00178 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_add3aa1256f192c7a1cadddbdae8ec0c5}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!setTimer4Hertz@{setTimer4Hertz}}
+\index{setTimer4Hertz@{setTimer4Hertz}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{setTimer4Hertz()}
+{\footnotesize\ttfamily void set\+Timer4\+Hertz (\begin{DoxyParamCaption}\item[{int}]{hertz }\end{DoxyParamCaption})}
+
+
+
+Sets the timer. 
+
+Uses {\ttfamily hertz} to set the frequency and value of the timer
+
+
+\begin{DoxyParams}{Parameters}
+{\em hertz} & \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \textbf{ 256} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00256                                \{}
+\DoxyCodeLine{00257     \textcolor{keywordflow}{if} (hertz == 0) \{}
+\DoxyCodeLine{00258         \textcolor{comment}{// Disable the timer output}}
+\DoxyCodeLine{00259         TCCR4A \&= \string~(1 << COM4A0);}
+\DoxyCodeLine{00260     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00261         \textcolor{comment}{// Make sure the timer is enabled}}
+\DoxyCodeLine{00262         TCCR4A |= 1 << COM4A0;}
+\DoxyCodeLine{00263         \textcolor{comment}{// Set the CTC value based on the hertz. Multiplying by two because the clock toggles, and so the value for the ORC4A needs to be toggled twice to be one cycle.}}
+\DoxyCodeLine{00264         OCR4A = 16000000/(hertz * 2);}
+\DoxyCodeLine{00265     \}}
+\DoxyCodeLine{00266 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_a4fc01d736fe50cf5b977f755b675f11d}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!setup@{setup}}
+\index{setup@{setup}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{setup()}
+{\footnotesize\ttfamily void setup (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Standard setup Arduino function. 
+
+\begin{DoxySeeAlso}{See also}
+\doxyref{enable\+Timer4}{p.}{lab3__demo3_8ino_a5ec326a238fa0e15e084d437b742e9b8} 
+
+\doxyref{scheduler\+Setup}{p.}{lab3__demo3_8ino_a885c6f1d325cfbd176227daded4ca3bd} 
+\end{DoxySeeAlso}
+
+
+Definition at line \textbf{ 296} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00296              \{}
+\DoxyCodeLine{00297     Serial.begin(9600);}
+\DoxyCodeLine{00298     cli();}
+\DoxyCodeLine{00299     schedulerSetup();}
+\DoxyCodeLine{00300     sei();}
+\DoxyCodeLine{00301     \textcolor{comment}{// Task 1 setup}}
+\DoxyCodeLine{00302     DDRL |= (1 << PL0);}
+\DoxyCodeLine{00303     enableTimer4();}
+\DoxyCodeLine{00304     tasks[0] = \&task1\_TCB;}
+\DoxyCodeLine{00305     tasks[1] = \&task2\_TCB;}
+\DoxyCodeLine{00306     tasks[2] = \&schedule\_sync\_TCB;}
+\DoxyCodeLine{00307     tasks[3] = \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00308     taskCount = 3;}
+\DoxyCodeLine{00309 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_a35747ba8226ac9cfa8fb8e378388c575}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!seven\_seg\_updater@{seven\_seg\_updater}}
+\index{seven\_seg\_updater@{seven\_seg\_updater}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{seven\_seg\_updater()}
+{\footnotesize\ttfamily void seven\+\_\+seg\+\_\+updater (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\mbox{\label{lab3__demo3_8ino_adb2bea98b6ff09ca57694403daa07f02}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!sleep\_474@{sleep\_474}}
+\index{sleep\_474@{sleep\_474}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{sleep\_474()}
+{\footnotesize\ttfamily void sleep\+\_\+474 (\begin{DoxyParamCaption}\item[{int}]{t }\end{DoxyParamCaption})}
+
+
+
+Sets a task state to sleeping. 
+
+Uses {\ttfamily t} to set a certain task state to sleeping for t seconds if it is currently running
+
+
+\begin{DoxyParams}{Parameters}
+{\em t} & \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \textbf{ 132} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00132                       \{}
+\DoxyCodeLine{00133     TCB* task = tasks[get\_running\_task()];}
+\DoxyCodeLine{00134     task-\/>sleep\_time = t;}
+\DoxyCodeLine{00135     task-\/>state = TaskState::SLEEPING;}
+\DoxyCodeLine{00136 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_afde07648040c326129670547738a0c86}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!task1@{task1}}
+\index{task1@{task1}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{task1()}
+{\footnotesize\ttfamily void task1 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Task1 that flashes an LED every 250 ms. 
+
+Use the sleep\+\_\+474 method to update the state of the LED based on time
+
+\begin{DoxySeeAlso}{See also}
+\doxyref{sleep\+\_\+474}{p.}{lab3__demo3_8ino_adb2bea98b6ff09ca57694403daa07f02} 
+\end{DoxySeeAlso}
+
+
+Definition at line \textbf{ 211} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00211              \{}
+\DoxyCodeLine{00212   \textcolor{keywordtype}{bool} on = PORTL \& (1 << PL0);}
+\DoxyCodeLine{00213   \textcolor{keywordflow}{if} (on) \{}
+\DoxyCodeLine{00214     PORTL \&= \string~(1 << PL0);}
+\DoxyCodeLine{00215     sleep\_474(750);}
+\DoxyCodeLine{00216   \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00217     PORTL |= (1 << PL0);}
+\DoxyCodeLine{00218     sleep\_474(250);}
+\DoxyCodeLine{00219   \}}
+\DoxyCodeLine{00220 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_afb35a54f26606b4808ac0a8d9ad55433}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!task2@{task2}}
+\index{task2@{task2}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{task2()}
+{\footnotesize\ttfamily void task2 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Plays a theme on the board. 
+
+Uses sleep\+\_\+474 and the set\+Timer4\+Hertz methods to set the current frequency to a specific value in an array of values
+
+\begin{DoxySeeAlso}{See also}
+\doxyref{notes}{p.}{lab3__demo3_8ino_af710a1fbffd801dd83eecf0a2923efb3} 
+
+\doxyref{set\+Timer4\+Hertz}{p.}{lab3__demo3_8ino_add3aa1256f192c7a1cadddbdae8ec0c5} 
+
+\doxyref{sleep\+\_\+474}{p.}{lab3__demo3_8ino_adb2bea98b6ff09ca57694403daa07f02} 
+\end{DoxySeeAlso}
+
+
+Definition at line \textbf{ 277} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00277              \{}
+\DoxyCodeLine{00278   \textcolor{keyword}{static} \textcolor{keywordtype}{int} note = 0;}
+\DoxyCodeLine{00279   \textcolor{keywordflow}{if} (note == 5) \{}
+\DoxyCodeLine{00280     setTimer4Hertz(0);}
+\DoxyCodeLine{00281     sleep\_474(4000);}
+\DoxyCodeLine{00282     note = 0;}
+\DoxyCodeLine{00283     \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00284   \}}
+\DoxyCodeLine{00285   setTimer4Hertz(notes[note]);}
+\DoxyCodeLine{00286   note++;}
+\DoxyCodeLine{00287   sleep\_474(1000);}
+\DoxyCodeLine{00288 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_a0651bcf660ee8e24dac5d2c9a425e6c3}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!task\_self\_quit@{task\_self\_quit}}
+\index{task\_self\_quit@{task\_self\_quit}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{task\_self\_quit()}
+{\footnotesize\ttfamily void task\+\_\+self\+\_\+quit (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+quits the current task 
+
+Uses the task array to set a current task state to DEAD until there are no more running tasks
+
+\begin{DoxyWarning}{Warning}
+Will not quit any more tasks and prints an error message when there are 10 dead tasks 
+\end{DoxyWarning}
+
+
+Definition at line \textbf{ 80} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00080                      \{}
+\DoxyCodeLine{00081     uint8\_t currentTask = get\_running\_task();}
+\DoxyCodeLine{00082     \textcolor{keywordflow}{if} (currentTask == 0xFF) \{}
+\DoxyCodeLine{00083         Serial.println(\textcolor{stringliteral}{"{}Called task\_self\_quit with no running task"{}});}
+\DoxyCodeLine{00084         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00085     \}}
+\DoxyCodeLine{00086     TCB* task = tasks[currentTask];}
+\DoxyCodeLine{00087     task-\/>state = TaskState::DEAD;}
+\DoxyCodeLine{00088     remove\_index\_from\_array(tasks, taskCount-\/-\/, currentTask);}
+\DoxyCodeLine{00089     \textcolor{keywordflow}{if} (deadTaskCount == 10) \{}
+\DoxyCodeLine{00090         Serial.println(\textcolor{stringliteral}{"{}Quit task when no dead task slots available."{}});}
+\DoxyCodeLine{00091         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00092     \}}
+\DoxyCodeLine{00093     deadTasks[deadTaskCount++] = task;}
+\DoxyCodeLine{00094 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo3_8ino_aa7ed8560fe54d7cdc39536d1c309e182}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!task\_start@{task\_start}}
+\index{task\_start@{task\_start}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{task\_start()}
+{\footnotesize\ttfamily void task\+\_\+start (\begin{DoxyParamCaption}\item[{\textbf{ TCB} $\ast$}]{task }\end{DoxyParamCaption})}
+
+
+
+Starts a task. 
+
+Uses {\ttfamily task} to start tasks unless they are all started already or the task is not found
+
+
+\begin{DoxyParams}{Parameters}
+{\em task} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxySeeAlso}{See also}
+\doxyref{remove\+\_\+index\+\_\+from\+\_\+array}{p.}{lab3__demo3_8ino_ae9e7f59e9bbb5c0fb52e69c2cd055a78} 
+\end{DoxySeeAlso}
+
+
+Definition at line \textbf{ 105} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00105                            \{}
+\DoxyCodeLine{00106     uint8\_t deadTaskIndex = 0xFF;}
+\DoxyCodeLine{00107     \textcolor{keywordflow}{for} (uint8\_t i = 0; i < deadTaskCount; i++) \{}
+\DoxyCodeLine{00108         \textcolor{keywordflow}{if} (task == deadTasks[i]) \{}
+\DoxyCodeLine{00109         deadTaskIndex = i;}
+\DoxyCodeLine{00110         \}}
+\DoxyCodeLine{00111     \}}
+\DoxyCodeLine{00112     \textcolor{keywordflow}{if} (deadTaskIndex == 0xFF) \{}
+\DoxyCodeLine{00113         Serial.print(\textcolor{stringliteral}{"{}Task "{}});}
+\DoxyCodeLine{00114         Serial.write(task-\/>desc);}
+\DoxyCodeLine{00115         Serial.println(\textcolor{stringliteral}{"{} not found."{}});}
+\DoxyCodeLine{00116     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00117         remove\_index\_from\_array(deadTasks, deadTaskCount-\/-\/, deadTaskIndex);}
+\DoxyCodeLine{00118     \}}
+\DoxyCodeLine{00119     task-\/>state = TaskState::READY;}
+\DoxyCodeLine{00120     TCB* sync = tasks[taskCount -\/ 1];}
+\DoxyCodeLine{00121     tasks[taskCount -\/ 1] = task;}
+\DoxyCodeLine{00122     tasks[taskCount++] = sync;}
+\DoxyCodeLine{00123 \}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\label{lab3__demo3_8ino_ab82b6ac1d24302dc4a826ec9ed8b2a66}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!currentTask@{currentTask}}
+\index{currentTask@{currentTask}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{currentTask}
+{\footnotesize\ttfamily uint8\+\_\+t current\+Task}
+
+
+
+Definition at line \textbf{ 36} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+\mbox{\label{lab3__demo3_8ino_a634df138a403faad9b10a1548e49410c}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!deadTaskCount@{deadTaskCount}}
+\index{deadTaskCount@{deadTaskCount}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{deadTaskCount}
+{\footnotesize\ttfamily uint8\+\_\+t dead\+Task\+Count}
+
+
+
+Definition at line \textbf{ 39} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+\mbox{\label{lab3__demo3_8ino_a189aeca355b8f6b6aafd2ae771163b31}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!deadTasks@{deadTasks}}
+\index{deadTasks@{deadTasks}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{deadTasks}
+{\footnotesize\ttfamily \textbf{ TCB}$\ast$ dead\+Tasks[10]}
+
+
+
+Array of dead tasks. 
+
+
+
+Definition at line \textbf{ 38} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+\mbox{\label{lab3__demo3_8ino_af710a1fbffd801dd83eecf0a2923efb3}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!notes@{notes}}
+\index{notes@{notes}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{notes}
+{\footnotesize\ttfamily int notes[$\,$] = \{293, 329, 261, 130, 196\}}
+
+
+
+Definition at line \textbf{ 225} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+\mbox{\label{lab3__demo3_8ino_a9391c9766a84e86e96f832f6cbb38431}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!schedule\_sync\_TCB@{schedule\_sync\_TCB}}
+\index{schedule\_sync\_TCB@{schedule\_sync\_TCB}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{schedule\_sync\_TCB}
+{\footnotesize\ttfamily \textbf{ TCB} schedule\+\_\+sync\+\_\+\+TCB = \{ \textbf{ uuid}++, \char`\"{}Syncs the scheduler\char`\"{}, 0, Task\+State\+::\+READY, 0, $\ast$\textbf{ schedule\+\_\+sync}\}}
+
+
+
+Definition at line \textbf{ 25} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+\mbox{\label{lab3__demo3_8ino_a0e50cf62d67abd005248e5d8b7749b06}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!seven\_seg\_updater\_TCB@{seven\_seg\_updater\_TCB}}
+\index{seven\_seg\_updater\_TCB@{seven\_seg\_updater\_TCB}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{seven\_seg\_updater\_TCB}
+{\footnotesize\ttfamily \textbf{ TCB} seven\+\_\+seg\+\_\+updater\+\_\+\+TCB = \{ \textbf{ uuid}++, \char`\"{}7 seg updater\char`\"{}, 0, Task\+State\+::\+READY, 0, $\ast$\textbf{ seven\+\_\+seg\+\_\+updater}\}}
+
+
+
+Definition at line \textbf{ 31} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+\mbox{\label{lab3__demo3_8ino_a7ebea5bb77027a7ed1ef842ed78c37e8}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!sFlag@{sFlag}}
+\index{sFlag@{sFlag}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{sFlag}
+{\footnotesize\ttfamily volatile \textbf{ Scheduler\+State} s\+Flag = \textbf{ Scheduler\+State\+::\+PENDING}}
+
+
+
+Definition at line \textbf{ 139} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+\mbox{\label{lab3__demo3_8ino_a5eb5ad8aa32218849966fef3f4174393}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!task1\_TCB@{task1\_TCB}}
+\index{task1\_TCB@{task1\_TCB}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{task1\_TCB}
+{\footnotesize\ttfamily \textbf{ TCB} task1\+\_\+\+TCB = \{ \textbf{ uuid}++, \char`\"{}Led Flash\char`\"{}, 0, Task\+State\+::\+READY, 0, $\ast$\textbf{ task1}\}}
+
+
+
+Definition at line \textbf{ 27} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+\mbox{\label{lab3__demo3_8ino_ac07e4d94c2771e2444820b8de1e24f1d}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!task2\_TCB@{task2\_TCB}}
+\index{task2\_TCB@{task2\_TCB}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{task2\_TCB}
+{\footnotesize\ttfamily \textbf{ TCB} task2\+\_\+\+TCB = \{ \textbf{ uuid}++, \char`\"{}Close Encounters\char`\"{}, 0, Task\+State\+::\+READY, 0, $\ast$\textbf{ task2}\}}
+
+
+
+Definition at line \textbf{ 29} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+\mbox{\label{lab3__demo3_8ino_a4bf0c395d97f242cc216f16b50b69ac0}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!taskCount@{taskCount}}
+\index{taskCount@{taskCount}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{taskCount}
+{\footnotesize\ttfamily uint8\+\_\+t task\+Count}
+
+
+
+Definition at line \textbf{ 35} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+\mbox{\label{lab3__demo3_8ino_a4a097d8d564ce4960b58a01cccdced9a}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!tasks@{tasks}}
+\index{tasks@{tasks}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{tasks}
+{\footnotesize\ttfamily \textbf{ TCB}$\ast$ tasks[10]}
+
+
+
+Array of tasks represented by \doxyref{TCB}{p.}{struct_t_c_b} struct. 
+
+
+
+Definition at line \textbf{ 34} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+
+\mbox{\label{lab3__demo3_8ino_a80310446e620cfbf5d7dc3394f471134}} 
+\index{lab3\_demo3.ino@{lab3\_demo3.ino}!uuid@{uuid}}
+\index{uuid@{uuid}!lab3\_demo3.ino@{lab3\_demo3.ino}}
+\doxysubsubsection{uuid}
+{\footnotesize\ttfamily uint8\+\_\+t uuid = 0}
+
+
+
+Definition at line \textbf{ 22} of file \textbf{ lab3\+\_\+demo3.\+ino}.
+

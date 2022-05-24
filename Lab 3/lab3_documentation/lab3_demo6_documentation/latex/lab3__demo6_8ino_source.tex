@@ -1,0 +1,295 @@
+\doxysection{lab3\+\_\+demo6.\+ino}
+\label{lab3__demo6_8ino_source}\index{lab3\_demo6/lab3\_demo6.ino@{lab3\_demo6/lab3\_demo6.ino}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001 \textcolor{comment}{/* @file   lab3\_demo6.ino}}
+\DoxyCodeLine{00002 \textcolor{comment}{ *   @author    Varun Venkatesh, Eli Orona}}
+\DoxyCodeLine{00003 \textcolor{comment}{ *   @date      22-\/May-\/2022}}
+\DoxyCodeLine{00004 \textcolor{comment}{ *   @brief   Demo \#6 of Lab 3}}
+\DoxyCodeLine{00005 \textcolor{comment}{ *   }}
+\DoxyCodeLine{00006 \textcolor{comment}{ *  Uses a DDS scheduler to run task5}}
+\DoxyCodeLine{00007 \textcolor{comment}{ */}}
+\DoxyCodeLine{00008 }
+\DoxyCodeLine{00009 \textcolor{keyword}{using }task = void(*)();}
+\DoxyCodeLine{00010 \textcolor{keyword}{enum} TaskState \{ READY, RUNNING, SLEEPING, DEAD \};}
+\DoxyCodeLine{00011 }
+\DoxyCodeLine{00013 \textcolor{keyword}{struct }TCB \{}
+\DoxyCodeLine{00014   \textcolor{keywordtype}{int} id\_code;}
+\DoxyCodeLine{00015   \textcolor{keywordtype}{char} desc[20];}
+\DoxyCodeLine{00016   \textcolor{keywordtype}{int} times\_started;}
+\DoxyCodeLine{00017   TaskState state;}
+\DoxyCodeLine{00018   int32\_t sleep\_time;}
+\DoxyCodeLine{00019   task run;}
+\DoxyCodeLine{00020 \};}
+\DoxyCodeLine{00021 }
+\DoxyCodeLine{00022 uint8\_t uuid = 0;}
+\DoxyCodeLine{00023 \textcolor{keywordtype}{void} schedulerSetup();}
+\DoxyCodeLine{00024 \textcolor{keywordtype}{void} schedulerUpdate();}
+\DoxyCodeLine{00025 \textcolor{keywordtype}{void} schedule\_sync();TCB schedule\_sync\_TCB = \{ uuid++, \textcolor{stringliteral}{"{}Syncs the scheduler"{}}, 0, TaskState::READY, 0, *schedule\_sync\};}
+\DoxyCodeLine{00026 \textcolor{keywordtype}{void} task1();TCB task1\_TCB = \{ uuid++, \textcolor{stringliteral}{"{}Led Flash"{}}, 0, TaskState::READY, 0, *task1\};}
+\DoxyCodeLine{00027 \textcolor{keywordtype}{void} task2();TCB task2\_TCB = \{ uuid++, \textcolor{stringliteral}{"{}Close Encounters"{}}, 0, TaskState::READY, 0, *task2\};}
+\DoxyCodeLine{00028 \textcolor{keywordtype}{void} seven\_seg\_updater();TCB seven\_seg\_updater\_TCB = \{ uuid++, \textcolor{stringliteral}{"{}7 seg updater"{}}, 0, TaskState::READY, 0, *seven\_seg\_updater\};}
+\DoxyCodeLine{00029 \textcolor{keywordtype}{void} task5\_countdown();TCB task5\_countdown\_TCB = \{ uuid++, \textcolor{stringliteral}{"{}Task 5 countdown"{}}, 0, TaskState::READY, 0, *task5\_countdown\};}
+\DoxyCodeLine{00030 \textcolor{keywordtype}{void} task5\_smile();TCB task5\_smile\_TCB = \{ uuid++, \textcolor{stringliteral}{"{}Task 5 smile"{}}, 0, TaskState::READY, 0, *task5\_smile\};}
+\DoxyCodeLine{00031 }
+\DoxyCodeLine{00032 TCB* tasks[10]; }
+\DoxyCodeLine{00033 uint8\_t taskCount;}
+\DoxyCodeLine{00034 uint8\_t currentTask;}
+\DoxyCodeLine{00036 TCB* deadTasks[10];}
+\DoxyCodeLine{00037 uint8\_t deadTaskCount;}
+\DoxyCodeLine{00038 }
+\DoxyCodeLine{00046 uint8\_t get\_running\_task() \{}
+\DoxyCodeLine{00047     \textcolor{keywordflow}{for}(uint8\_t i = 0; i < 10; i++) \{}
+\DoxyCodeLine{00048         \textcolor{keywordflow}{if} (tasks[i]-\/>state == TaskState::RUNNING) \{}
+\DoxyCodeLine{00049         \textcolor{keywordflow}{return} i;}
+\DoxyCodeLine{00050         \}}
+\DoxyCodeLine{00051     \}}
+\DoxyCodeLine{00052     \textcolor{keywordflow}{return} 0xFF;}
+\DoxyCodeLine{00053 \}}
+\DoxyCodeLine{00054 }
+\DoxyCodeLine{00064 \textcolor{keywordtype}{void} remove\_index\_from\_array(TCB** array, uint8\_t size, uint8\_t index) \{}
+\DoxyCodeLine{00065     \textcolor{keywordflow}{for} (uint8\_t i = index; i < size; i++) \{}
+\DoxyCodeLine{00066         array[i] = array[i + 1];}
+\DoxyCodeLine{00067     \}}
+\DoxyCodeLine{00068     array[size -\/ 1] = \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00069 \}}
+\DoxyCodeLine{00070 }
+\DoxyCodeLine{00078 \textcolor{keywordtype}{void} task\_self\_quit()\{}
+\DoxyCodeLine{00079     uint8\_t currentTask = get\_running\_task();}
+\DoxyCodeLine{00080     \textcolor{keywordflow}{if} (currentTask == 0xFF) \{}
+\DoxyCodeLine{00081         Serial.println(\textcolor{stringliteral}{"{}Called task\_self\_quit with no running task"{}});}
+\DoxyCodeLine{00082         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00083     \}}
+\DoxyCodeLine{00084     TCB* task = tasks[currentTask];}
+\DoxyCodeLine{00085     task-\/>state = TaskState::DEAD;}
+\DoxyCodeLine{00086     remove\_index\_from\_array(tasks, taskCount-\/-\/, currentTask);}
+\DoxyCodeLine{00087     \textcolor{keywordflow}{if} (deadTaskCount == 10) \{}
+\DoxyCodeLine{00088         Serial.println(\textcolor{stringliteral}{"{}Quit task when no dead task slots available."{}});}
+\DoxyCodeLine{00089         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00090     \}}
+\DoxyCodeLine{00091     deadTasks[deadTaskCount++] = task;}
+\DoxyCodeLine{00092 \}}
+\DoxyCodeLine{00093 }
+\DoxyCodeLine{00103 \textcolor{keywordtype}{void} task\_start(TCB* task) \{}
+\DoxyCodeLine{00104     uint8\_t deadTaskIndex = 0xFF;}
+\DoxyCodeLine{00105     \textcolor{keywordflow}{for} (uint8\_t i = 0; i < deadTaskCount; i++) \{}
+\DoxyCodeLine{00106         \textcolor{keywordflow}{if} (task == deadTasks[i]) \{}
+\DoxyCodeLine{00107         deadTaskIndex = i;}
+\DoxyCodeLine{00108         \}}
+\DoxyCodeLine{00109     \}}
+\DoxyCodeLine{00110     \textcolor{keywordflow}{if} (deadTaskIndex == 0xFF) \{}
+\DoxyCodeLine{00111         Serial.print(\textcolor{stringliteral}{"{}Task "{}});}
+\DoxyCodeLine{00112         Serial.write(task-\/>desc);}
+\DoxyCodeLine{00113         Serial.println(\textcolor{stringliteral}{"{} not found."{}});}
+\DoxyCodeLine{00114     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00115         remove\_index\_from\_array(deadTasks, deadTaskCount-\/-\/, deadTaskIndex);}
+\DoxyCodeLine{00116     \}}
+\DoxyCodeLine{00117     task-\/>state = TaskState::READY;}
+\DoxyCodeLine{00118     TCB* sync = tasks[taskCount -\/ 1];}
+\DoxyCodeLine{00119     tasks[taskCount -\/ 1] = task;}
+\DoxyCodeLine{00120     tasks[taskCount++] = sync;}
+\DoxyCodeLine{00121 \}}
+\DoxyCodeLine{00122 }
+\DoxyCodeLine{00130 \textcolor{keywordtype}{void} sleep\_474(\textcolor{keywordtype}{int} t) \{}
+\DoxyCodeLine{00131     TCB* task = tasks[get\_running\_task()];}
+\DoxyCodeLine{00132     task-\/>sleep\_time = t;}
+\DoxyCodeLine{00133     task-\/>state = TaskState::SLEEPING;}
+\DoxyCodeLine{00134 \}}
+\DoxyCodeLine{00135 }
+\DoxyCodeLine{00136 \textcolor{keyword}{enum} SchedulerState \{ PENDING, DONE \};}
+\DoxyCodeLine{00137 \textcolor{keyword}{volatile} SchedulerState sFlag = SchedulerState::PENDING;}
+\DoxyCodeLine{00138 }
+\DoxyCodeLine{00142 \textcolor{keywordtype}{void} schedulerSetup() \{}
+\DoxyCodeLine{00143     \textcolor{comment}{// Initialize the timer}}
+\DoxyCodeLine{00144     TCCR0A = (1 << WGM01); \textcolor{comment}{// CTC mode}}
+\DoxyCodeLine{00145     TCCR0B = (1 << CS02) ; \textcolor{comment}{// 1024 Prescaler}}
+\DoxyCodeLine{00146     OCR0A = 117; \textcolor{comment}{// Full period of the clock every 500Hz/2ms}}
+\DoxyCodeLine{00147     TIMSK0 = (1 << OCIE0A); \textcolor{comment}{// Enable Interrupts }}
+\DoxyCodeLine{00148 \}}
+\DoxyCodeLine{00149 }
+\DoxyCodeLine{00153 ISR(TIMER0\_COMPA\_vect) \{}
+\DoxyCodeLine{00154     sFlag = SchedulerState::DONE;}
+\DoxyCodeLine{00155 \}}
+\DoxyCodeLine{00156 }
+\DoxyCodeLine{00162 \textcolor{keywordtype}{void} schedulerUpdate() \{}
+\DoxyCodeLine{00163     \textcolor{keywordflow}{for} (\textcolor{keywordtype}{int} i = 0; i < 10; i++) \{}
+\DoxyCodeLine{00164         TCB* task = tasks[i];}
+\DoxyCodeLine{00165         \textcolor{keywordflow}{if} (task == \textcolor{keyword}{nullptr}) \{}
+\DoxyCodeLine{00166         \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00167         \}}
+\DoxyCodeLine{00168         \textcolor{keywordflow}{if} (task-\/>state == TaskState::READY) \{}
+\DoxyCodeLine{00169         task-\/>state = TaskState::RUNNING;}
+\DoxyCodeLine{00170         task-\/>run();}
+\DoxyCodeLine{00171         \textcolor{keywordflow}{if} (task-\/>state != TaskState::SLEEPING) \{}
+\DoxyCodeLine{00172             task-\/>state = TaskState::READY;}
+\DoxyCodeLine{00173         \}}
+\DoxyCodeLine{00174         \}}
+\DoxyCodeLine{00175     \}}
+\DoxyCodeLine{00176 \}}
+\DoxyCodeLine{00177 }
+\DoxyCodeLine{00183 \textcolor{keywordtype}{void} schedule\_sync() \{}
+\DoxyCodeLine{00184     \textcolor{keywordflow}{while} (sFlag == SchedulerState::PENDING) \{}
+\DoxyCodeLine{00185         \textcolor{comment}{//no op}}
+\DoxyCodeLine{00186     \}}
+\DoxyCodeLine{00187     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < 10; i++) \{}
+\DoxyCodeLine{00188         TCB* task = tasks[i];}
+\DoxyCodeLine{00189         \textcolor{keywordflow}{if} (task == \textcolor{keyword}{nullptr}) \{}
+\DoxyCodeLine{00190         \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00191         \}}
+\DoxyCodeLine{00192         \textcolor{keywordflow}{if} (task-\/>state == TaskState::SLEEPING) \{}
+\DoxyCodeLine{00193         task-\/>sleep\_time -\/= 2;}
+\DoxyCodeLine{00194         \textcolor{keywordflow}{if} (task-\/>sleep\_time < 2) \{}
+\DoxyCodeLine{00195             task-\/>state = TaskState::READY;}
+\DoxyCodeLine{00196         \}}
+\DoxyCodeLine{00197         \}}
+\DoxyCodeLine{00198     \}}
+\DoxyCodeLine{00199     sFlag = SchedulerState::PENDING;}
+\DoxyCodeLine{00200 \}}
+\DoxyCodeLine{00201 }
+\DoxyCodeLine{00209 \textcolor{keywordtype}{void} task1() \{}
+\DoxyCodeLine{00210         \textcolor{keywordtype}{bool} on = PORTL \& (1 << PL0);}
+\DoxyCodeLine{00211         \textcolor{keywordflow}{if} (on) \{}
+\DoxyCodeLine{00212         PORTL \&= \string~(1 << PL0);}
+\DoxyCodeLine{00213         sleep\_474(750);}
+\DoxyCodeLine{00214         \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00215         PORTL |= (1 << PL0);}
+\DoxyCodeLine{00216         sleep\_474(250);}
+\DoxyCodeLine{00217         \}}
+\DoxyCodeLine{00218 \}}
+\DoxyCodeLine{00219 }
+\DoxyCodeLine{00220 \textcolor{comment}{// Sets the output rate for TIMER4}}
+\DoxyCodeLine{00221 \textcolor{comment}{// Input: hertz -\/ the hertz to drive TIMER4 at. If hertz is zero, the timer is disabled.}}
+\DoxyCodeLine{00222 \textcolor{keywordtype}{void} setTimer4Hertz(\textcolor{keywordtype}{int} hertz);}
+\DoxyCodeLine{00223 \textcolor{keywordtype}{int} notes[] = \{293, 329, 261, 130, 196\};}
+\DoxyCodeLine{00224 }
+\DoxyCodeLine{00229 \textcolor{keywordtype}{void} enableTimer4() \{}
+\DoxyCodeLine{00230     \textcolor{comment}{// Enable the clock}}
+\DoxyCodeLine{00231     PRR1 \&= \string~(1 << PRTIM4);}
+\DoxyCodeLine{00232     \textcolor{comment}{// Enable the output pin}}
+\DoxyCodeLine{00233     DDRH |= 1 << PH3;}
+\DoxyCodeLine{00234     \textcolor{comment}{// Clear the timer registers}}
+\DoxyCodeLine{00235     TCCR4A = 0;}
+\DoxyCodeLine{00236     TCCR4B = 0;}
+\DoxyCodeLine{00237     \textcolor{comment}{// turn on CTC mode}}
+\DoxyCodeLine{00238     TCCR4B |= (1 << WGM12);}
+\DoxyCodeLine{00239     \textcolor{comment}{// Set CS10 bit for a prescaler of 1}}
+\DoxyCodeLine{00240     TCCR4B |= (1 << CS10);}
+\DoxyCodeLine{00241     \textcolor{comment}{// Enable output on PH3}}
+\DoxyCodeLine{00242     TCCR4A |= 1 << COM4A0;}
+\DoxyCodeLine{00243     \textcolor{comment}{// Clear the timer counter}}
+\DoxyCodeLine{00244     TCNT4 = 0;}
+\DoxyCodeLine{00245 \}}
+\DoxyCodeLine{00246 }
+\DoxyCodeLine{00254 \textcolor{keywordtype}{void} setTimer4Hertz(\textcolor{keywordtype}{int} hertz) \{}
+\DoxyCodeLine{00255     \textcolor{keywordflow}{if} (hertz == 0) \{}
+\DoxyCodeLine{00256         \textcolor{comment}{// Disable the timer output}}
+\DoxyCodeLine{00257         TCCR4A \&= \string~(1 << COM4A0);}
+\DoxyCodeLine{00258     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00259         \textcolor{comment}{// Make sure the timer is enabled}}
+\DoxyCodeLine{00260         TCCR4A |= 1 << COM4A0;}
+\DoxyCodeLine{00261         \textcolor{comment}{// Set the CTC value based on the hertz. Multiplying by two because the clock toggles, and so the value for the ORC4A needs to be toggled twice to be one cycle.}}
+\DoxyCodeLine{00262         OCR4A = 16000000/(hertz * 2);}
+\DoxyCodeLine{00263     \}}
+\DoxyCodeLine{00264 \}}
+\DoxyCodeLine{00265 }
+\DoxyCodeLine{00266 uint16\_t display = 0;}
+\DoxyCodeLine{00267 uint16\_t sevenSegmentToDigit[2][4] = \{\{1 << PF4, 1 << PF5, 1 << PF6, 1 << PF7\}, \{1, 10, 100, 1000\}\};}
+\DoxyCodeLine{00268 uint8\_t digitToOutput[] = \{0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111\};}
+\DoxyCodeLine{00269 \textcolor{keywordtype}{bool} quit\_7seg = \textcolor{keyword}{false};}
+\DoxyCodeLine{00270 }
+\DoxyCodeLine{00278 \textcolor{keywordtype}{void} seven\_seg\_updater() \{}
+\DoxyCodeLine{00279     \textcolor{keyword}{static} uint8\_t led = 0;}
+\DoxyCodeLine{00280         \textcolor{keywordflow}{if} (quit\_7seg) \{}
+\DoxyCodeLine{00281         task\_self\_quit();}
+\DoxyCodeLine{00282         quit\_7seg = \textcolor{keyword}{false};}
+\DoxyCodeLine{00283         PORTF = 0;}
+\DoxyCodeLine{00284         PORTK = 0;}
+\DoxyCodeLine{00285         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00286         \}}
+\DoxyCodeLine{00287     uint8\_t value = (display \% (sevenSegmentToDigit[1][led] * 10)) / sevenSegmentToDigit[1][led];}
+\DoxyCodeLine{00288     PORTF = (1 << PF7 | 1 << PF6 | 1 << PF5 | 1 << PF4) \string^ sevenSegmentToDigit[0][led];}
+\DoxyCodeLine{00289     PORTK = digitToOutput[value];}
+\DoxyCodeLine{00290     led++;}
+\DoxyCodeLine{00291     led \%= 4;}
+\DoxyCodeLine{00292     sleep\_474(2);}
+\DoxyCodeLine{00293 \}}
+\DoxyCodeLine{00294 }
+\DoxyCodeLine{00305 \textcolor{keywordtype}{void} task2() \{}
+\DoxyCodeLine{00306     \textcolor{keyword}{static} \textcolor{keywordtype}{int} note = 0;}
+\DoxyCodeLine{00307     \textcolor{keyword}{static} \textcolor{keywordtype}{int} play\_times = 0;}
+\DoxyCodeLine{00308     \textcolor{keywordflow}{if} (play\_times == 2) \{}
+\DoxyCodeLine{00309         task\_self\_quit();}
+\DoxyCodeLine{00310         task\_start(\&seven\_seg\_updater\_TCB);}
+\DoxyCodeLine{00311         task\_start(\&task5\_countdown\_TCB);}
+\DoxyCodeLine{00312         play\_times++;}
+\DoxyCodeLine{00313         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00314     \}}
+\DoxyCodeLine{00315     \textcolor{keywordflow}{if} (play\_times == 4) \{}
+\DoxyCodeLine{00316         task\_self\_quit();}
+\DoxyCodeLine{00317         task\_start(\&task5\_smile\_TCB);}
+\DoxyCodeLine{00318         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00319     \}}
+\DoxyCodeLine{00320     \textcolor{keywordflow}{if} (note == 5) \{}
+\DoxyCodeLine{00321         setTimer4Hertz(0);}
+\DoxyCodeLine{00322         note = 0;}
+\DoxyCodeLine{00323         sleep\_474(4000);}
+\DoxyCodeLine{00324         play\_times++;}
+\DoxyCodeLine{00325         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00326     \}}
+\DoxyCodeLine{00327     setTimer4Hertz(notes[note]);}
+\DoxyCodeLine{00328     note++;}
+\DoxyCodeLine{00329     sleep\_474(1000);}
+\DoxyCodeLine{00330 \}}
+\DoxyCodeLine{00341 \textcolor{keywordtype}{void} task5\_countdown() \{}
+\DoxyCodeLine{00342     \textcolor{keyword}{static} uint8\_t countdown = 3;}
+\DoxyCodeLine{00343     \textcolor{keywordflow}{if} (countdown == 0) \{}
+\DoxyCodeLine{00344         task\_self\_quit();}
+\DoxyCodeLine{00345         quit\_7seg = \textcolor{keyword}{true};}
+\DoxyCodeLine{00346         task\_start(\&task2\_TCB);}
+\DoxyCodeLine{00347         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00348     \}}
+\DoxyCodeLine{00349     display = (countdown -\/-\/) -\/ 1;}
+\DoxyCodeLine{00350     sleep\_474(1000);}
+\DoxyCodeLine{00351 \}}
+\DoxyCodeLine{00352 }
+\DoxyCodeLine{00353 uint8\_t smile[] = \{0b00001100, 0b00001001, 0b00001001, 0b00011000\};}
+\DoxyCodeLine{00354 }
+\DoxyCodeLine{00371 \textcolor{keywordtype}{void} task5\_smile() \{}
+\DoxyCodeLine{00372     \textcolor{keyword}{static} uint8\_t led = 0;}
+\DoxyCodeLine{00373     \textcolor{keyword}{static} uint16\_t time = 0;}
+\DoxyCodeLine{00374     \textcolor{keywordflow}{if} (time >= 2000) \{}
+\DoxyCodeLine{00375         task\_self\_quit();}
+\DoxyCodeLine{00376         PORTF = 0;}
+\DoxyCodeLine{00377         PORTK = 0;}
+\DoxyCodeLine{00378         \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00379     \}}
+\DoxyCodeLine{00380     PORTF = (1 << PF7 | 1 << PF6 | 1 << PF5 | 1 << PF4) \string^ sevenSegmentToDigit[0][led];}
+\DoxyCodeLine{00381     PORTK = smile[led];}
+\DoxyCodeLine{00382     led++;}
+\DoxyCodeLine{00383     led \%= 4;}
+\DoxyCodeLine{00384     time += 2;}
+\DoxyCodeLine{00385     sleep\_474(2);}
+\DoxyCodeLine{00386 \}}
+\DoxyCodeLine{00387 }
+\DoxyCodeLine{00394 \textcolor{keywordtype}{void} setup() \{}
+\DoxyCodeLine{00395     Serial.begin(9600);}
+\DoxyCodeLine{00396     cli();}
+\DoxyCodeLine{00397     schedulerSetup();}
+\DoxyCodeLine{00398     sei();}
+\DoxyCodeLine{00399     \textcolor{comment}{// Task 1 setup}}
+\DoxyCodeLine{00400     DDRL |= (1 << PL0);}
+\DoxyCodeLine{00401     enableTimer4();}
+\DoxyCodeLine{00402     DDRK = 0xFF; \textcolor{comment}{// All ports used}}
+\DoxyCodeLine{00403     DDRF = 1 << PF7 | 1 << PF6 | 1 << PF5 | 1 << PF4;}
+\DoxyCodeLine{00404     tasks[0] = \&task1\_TCB;}
+\DoxyCodeLine{00405     tasks[1] = \&task2\_TCB;}
+\DoxyCodeLine{00406     tasks[2] = \&schedule\_sync\_TCB;}
+\DoxyCodeLine{00407     tasks[3] = \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00408     taskCount = 3;}
+\DoxyCodeLine{00409 \}}
+\DoxyCodeLine{00410 }
+\DoxyCodeLine{00418 \textcolor{keywordtype}{void} loop() \{}
+\DoxyCodeLine{00419   schedulerUpdate();}
+\DoxyCodeLine{00420 \}}
+
+\end{DoxyCode}

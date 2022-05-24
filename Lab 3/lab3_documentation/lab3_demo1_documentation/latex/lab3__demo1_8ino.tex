@@ -1,0 +1,320 @@
+\doxysection{lab3\+\_\+demo1/lab3\+\_\+demo1.ino File Reference}
+\label{lab3__demo1_8ino}\index{lab3\_demo1/lab3\_demo1.ino@{lab3\_demo1/lab3\_demo1.ino}}
+\doxysubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+using \textbf{ task} = void($\ast$)(uint32\+\_\+t)
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \textbf{ scheduler\+Setup} ()
+\begin{DoxyCompactList}\small\item\em Sets up the scheduler to prepare for the tasks. \end{DoxyCompactList}\item 
+void \textbf{ scheduler\+Update} ()
+\begin{DoxyCompactList}\small\item\em Updates the scheduler. Calls task1 and task2 repeatedly with updated time. \end{DoxyCompactList}\item 
+void \textbf{ schedule\+\_\+sync} (uint32\+\_\+t millis)
+\item 
+void \textbf{ task1} (uint32\+\_\+t millis)
+\begin{DoxyCompactList}\small\item\em Task1 that flashes an LED every 250 ms. \end{DoxyCompactList}\item 
+void \textbf{ task2} (uint32\+\_\+t millis)
+\begin{DoxyCompactList}\small\item\em Plays a theme on the board. \end{DoxyCompactList}\item 
+void \textbf{ set\+Timer4\+Hertz} (int hertz)
+\begin{DoxyCompactList}\small\item\em Sets the timer. \end{DoxyCompactList}\item 
+void \textbf{ enable\+Timer4} ()
+\begin{DoxyCompactList}\small\item\em Enables the timer on the board. \end{DoxyCompactList}\item 
+void \textbf{ setup} ()
+\begin{DoxyCompactList}\small\item\em Standard setup Arduino function. \end{DoxyCompactList}\item 
+void \textbf{ loop} ()
+\begin{DoxyCompactList}\small\item\em Standard loop Arduino function. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+int \textbf{ notes} [$\,$] = \{293, 329, 261, 130, 196\}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Typedef Documentation}
+\mbox{\label{lab3__demo1_8ino_aa0c9787ca72875a64a3da471b40a731d}} 
+\index{lab3\_demo1.ino@{lab3\_demo1.ino}!task@{task}}
+\index{task@{task}!lab3\_demo1.ino@{lab3\_demo1.ino}}
+\doxysubsubsection{task}
+{\footnotesize\ttfamily using \textbf{ task} =  void($\ast$)(uint32\+\_\+t)}
+
+
+
+Definition at line \textbf{ 11} of file \textbf{ lab3\+\_\+demo1.\+ino}.
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\label{lab3__demo1_8ino_a5ec326a238fa0e15e084d437b742e9b8}} 
+\index{lab3\_demo1.ino@{lab3\_demo1.ino}!enableTimer4@{enableTimer4}}
+\index{enableTimer4@{enableTimer4}!lab3\_demo1.ino@{lab3\_demo1.ino}}
+\doxysubsubsection{enableTimer4()}
+{\footnotesize\ttfamily void enable\+Timer4 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Enables the timer on the board. 
+
+\begin{DoxySeeAlso}{See also}
+\doxyref{setup}{p.}{lab3__demo1_8ino_a4fc01d736fe50cf5b977f755b675f11d} 
+
+\doxyref{set\+Timer4\+Hertz}{p.}{lab3__demo1_8ino_add3aa1256f192c7a1cadddbdae8ec0c5} 
+\end{DoxySeeAlso}
+
+
+Definition at line \textbf{ 70} of file \textbf{ lab3\+\_\+demo1.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00070                     \{}
+\DoxyCodeLine{00071     \textcolor{comment}{// Enable the clock}}
+\DoxyCodeLine{00072     PRR1 \&= \string~(1 << PRTIM4);}
+\DoxyCodeLine{00073     \textcolor{comment}{// Enable the output pin}}
+\DoxyCodeLine{00074     DDRH |= 1 << PH3;}
+\DoxyCodeLine{00075     \textcolor{comment}{// Clear the timer registers}}
+\DoxyCodeLine{00076     TCCR4A = 0;}
+\DoxyCodeLine{00077     TCCR4B = 0;}
+\DoxyCodeLine{00078     \textcolor{comment}{// turn on CTC mode}}
+\DoxyCodeLine{00079     TCCR4B |= (1 << WGM12);}
+\DoxyCodeLine{00080     \textcolor{comment}{// Set CS10 bit for a prescaler of 1}}
+\DoxyCodeLine{00081     TCCR4B |= (1 << CS10);}
+\DoxyCodeLine{00082     \textcolor{comment}{// Enable output on PH3}}
+\DoxyCodeLine{00083     TCCR4A |= 1 << COM4A0;}
+\DoxyCodeLine{00084     \textcolor{comment}{// Clear the timer counter}}
+\DoxyCodeLine{00085     TCNT4 = 0;}
+\DoxyCodeLine{00086 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo1_8ino_afe461d27b9c48d5921c00d521181f12f}} 
+\index{lab3\_demo1.ino@{lab3\_demo1.ino}!loop@{loop}}
+\index{loop@{loop}!lab3\_demo1.ino@{lab3\_demo1.ino}}
+\doxysubsubsection{loop()}
+{\footnotesize\ttfamily void loop (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Standard loop Arduino function. 
+
+Calls the scheduler\+Update function perpetually
+
+\begin{DoxySeeAlso}{See also}
+\doxyref{scheduler\+Update}{p.}{lab3__demo1_8ino_a0f82cef357638ee0d8363f64578fdb50} 
+\end{DoxySeeAlso}
+
+
+Definition at line \textbf{ 148} of file \textbf{ lab3\+\_\+demo1.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00148             \{}
+\DoxyCodeLine{00149   schedulerUpdate();}
+\DoxyCodeLine{00150 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo1_8ino_a4ae361af710c641443b6c9404d8de208}} 
+\index{lab3\_demo1.ino@{lab3\_demo1.ino}!schedule\_sync@{schedule\_sync}}
+\index{schedule\_sync@{schedule\_sync}!lab3\_demo1.ino@{lab3\_demo1.ino}}
+\doxysubsubsection{schedule\_sync()}
+{\footnotesize\ttfamily void schedule\+\_\+sync (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{millis }\end{DoxyParamCaption})}
+
+\mbox{\label{lab3__demo1_8ino_a885c6f1d325cfbd176227daded4ca3bd}} 
+\index{lab3\_demo1.ino@{lab3\_demo1.ino}!schedulerSetup@{schedulerSetup}}
+\index{schedulerSetup@{schedulerSetup}!lab3\_demo1.ino@{lab3\_demo1.ino}}
+\doxysubsubsection{schedulerSetup()}
+{\footnotesize\ttfamily void scheduler\+Setup (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Sets up the scheduler to prepare for the tasks. 
+
+\begin{DoxySeeAlso}{See also}
+\doxyref{scheduler\+Update}{p.}{lab3__demo1_8ino_a0f82cef357638ee0d8363f64578fdb50} 
+\end{DoxySeeAlso}
+\begin{DoxyNote}{Note}
+this method is empty for a round robin scheduler 
+\end{DoxyNote}
+
+
+Definition at line \textbf{ 24} of file \textbf{ lab3\+\_\+demo1.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00024 \{\}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo1_8ino_a0f82cef357638ee0d8363f64578fdb50}} 
+\index{lab3\_demo1.ino@{lab3\_demo1.ino}!schedulerUpdate@{schedulerUpdate}}
+\index{schedulerUpdate@{schedulerUpdate}!lab3\_demo1.ino@{lab3\_demo1.ino}}
+\doxysubsubsection{schedulerUpdate()}
+{\footnotesize\ttfamily void scheduler\+Update (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Updates the scheduler. Calls task1 and task2 repeatedly with updated time. 
+
+\begin{DoxySeeAlso}{See also}
+\doxyref{task1}{p.}{lab3__demo1_8ino_a46053f501f46361f46852fef77acb0bb} 
+
+\doxyref{task2}{p.}{lab3__demo1_8ino_a4905b41646b428dd149c4ac688d2bd3a} 
+\end{DoxySeeAlso}
+
+
+Definition at line \textbf{ 33} of file \textbf{ lab3\+\_\+demo1.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00033                        \{}
+\DoxyCodeLine{00034     \textcolor{keywordflow}{while}(1) \{}
+\DoxyCodeLine{00035         uint32\_t ms = millis();}
+\DoxyCodeLine{00036         task1(ms);}
+\DoxyCodeLine{00037         task2(ms);}
+\DoxyCodeLine{00038         delayMicroseconds((ms + 1) * 1000 -\/ micros());}
+\DoxyCodeLine{00039     \}}
+\DoxyCodeLine{00040 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo1_8ino_add3aa1256f192c7a1cadddbdae8ec0c5}} 
+\index{lab3\_demo1.ino@{lab3\_demo1.ino}!setTimer4Hertz@{setTimer4Hertz}}
+\index{setTimer4Hertz@{setTimer4Hertz}!lab3\_demo1.ino@{lab3\_demo1.ino}}
+\doxysubsubsection{setTimer4Hertz()}
+{\footnotesize\ttfamily void set\+Timer4\+Hertz (\begin{DoxyParamCaption}\item[{int}]{hertz }\end{DoxyParamCaption})}
+
+
+
+Sets the timer. 
+
+Uses {\ttfamily hertz} to set the frequency and value of the timer
+
+
+\begin{DoxyParams}{Parameters}
+{\em hertz} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxySeeAlso}{See also}
+\doxyref{task2}{p.}{lab3__demo1_8ino_a4905b41646b428dd149c4ac688d2bd3a} 
+\end{DoxySeeAlso}
+
+
+Definition at line \textbf{ 97} of file \textbf{ lab3\+\_\+demo1.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00097                                \{}
+\DoxyCodeLine{00098     \textcolor{keywordflow}{if} (hertz == 0) \{}
+\DoxyCodeLine{00099         \textcolor{comment}{// Disable the timer output}}
+\DoxyCodeLine{00100         TCCR4A \&= \string~(1 << COM4A0);}
+\DoxyCodeLine{00101     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00102         \textcolor{comment}{// Make sure the timer is enabled}}
+\DoxyCodeLine{00103         TCCR4A |= 1 << COM4A0;}
+\DoxyCodeLine{00104         \textcolor{comment}{// Set the CTC value based on the hertz. Multiplying by two because the clock toggles, and so the value for the ORC4A needs to be toggled twice to be one cycle.}}
+\DoxyCodeLine{00105         OCR4A = 16000000/(hertz * 2);}
+\DoxyCodeLine{00106     \}}
+\DoxyCodeLine{00107 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo1_8ino_a4fc01d736fe50cf5b977f755b675f11d}} 
+\index{lab3\_demo1.ino@{lab3\_demo1.ino}!setup@{setup}}
+\index{setup@{setup}!lab3\_demo1.ino@{lab3\_demo1.ino}}
+\doxysubsubsection{setup()}
+{\footnotesize\ttfamily void setup (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Standard setup Arduino function. 
+
+
+
+Definition at line \textbf{ 131} of file \textbf{ lab3\+\_\+demo1.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00131              \{}
+\DoxyCodeLine{00132     Serial.begin(9600);}
+\DoxyCodeLine{00133     cli();}
+\DoxyCodeLine{00134     schedulerSetup();}
+\DoxyCodeLine{00135     sei();}
+\DoxyCodeLine{00136     \textcolor{comment}{// Task 1 setup}}
+\DoxyCodeLine{00137     DDRL |= (1 << PL0);}
+\DoxyCodeLine{00138     enableTimer4();}
+\DoxyCodeLine{00139 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo1_8ino_a46053f501f46361f46852fef77acb0bb}} 
+\index{lab3\_demo1.ino@{lab3\_demo1.ino}!task1@{task1}}
+\index{task1@{task1}!lab3\_demo1.ino@{lab3\_demo1.ino}}
+\doxysubsubsection{task1()}
+{\footnotesize\ttfamily void task1 (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{millis }\end{DoxyParamCaption})}
+
+
+
+Task1 that flashes an LED every 250 ms. 
+
+Use {\ttfamily millis} to update the state of the LED 
+\begin{DoxyParams}{Parameters}
+{\em millis} & \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \textbf{ 50} of file \textbf{ lab3\+\_\+demo1.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00050                             \{}
+\DoxyCodeLine{00051   \textcolor{keywordtype}{int} on = (millis / 250) \% 4;}
+\DoxyCodeLine{00052   \textcolor{keywordflow}{if} (on == 0) \{}
+\DoxyCodeLine{00053     PORTL |= (1 << PL0);}
+\DoxyCodeLine{00054   \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00055     PORTL \&= \string~(1 << PL0);}
+\DoxyCodeLine{00056   \}}
+\DoxyCodeLine{00057 \}}
+
+\end{DoxyCode}
+\mbox{\label{lab3__demo1_8ino_a4905b41646b428dd149c4ac688d2bd3a}} 
+\index{lab3\_demo1.ino@{lab3\_demo1.ino}!task2@{task2}}
+\index{task2@{task2}!lab3\_demo1.ino@{lab3\_demo1.ino}}
+\doxysubsubsection{task2()}
+{\footnotesize\ttfamily void task2 (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{millis }\end{DoxyParamCaption})}
+
+
+
+Plays a theme on the board. 
+
+Uses {\ttfamily millis} and the set\+Timer4\+Hertz methods to set the current frequency to a specific value in an array of values
+
+\begin{DoxySeeAlso}{See also}
+\doxyref{notes}{p.}{lab3__demo1_8ino_af710a1fbffd801dd83eecf0a2923efb3} 
+
+\doxyref{set\+Timer4\+Hertz}{p.}{lab3__demo1_8ino_add3aa1256f192c7a1cadddbdae8ec0c5} 
+\end{DoxySeeAlso}
+
+
+Definition at line \textbf{ 118} of file \textbf{ lab3\+\_\+demo1.\+ino}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00118                             \{}
+\DoxyCodeLine{00119         \textcolor{keywordtype}{int} second = (millis / 1000) \% (5 + 4);}
+\DoxyCodeLine{00120         \textcolor{keywordflow}{if} (second < 5) \{}
+\DoxyCodeLine{00121         setTimer4Hertz(notes[second]);}
+\DoxyCodeLine{00122         \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{00123         setTimer4Hertz(0);}
+\DoxyCodeLine{00124         \}}
+\DoxyCodeLine{00125 \}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Variable Documentation}
+\mbox{\label{lab3__demo1_8ino_af710a1fbffd801dd83eecf0a2923efb3}} 
+\index{lab3\_demo1.ino@{lab3\_demo1.ino}!notes@{notes}}
+\index{notes@{notes}!lab3\_demo1.ino@{lab3\_demo1.ino}}
+\doxysubsubsection{notes}
+{\footnotesize\ttfamily int notes[$\,$] = \{293, 329, 261, 130, 196\}}
+
+
+
+Definition at line \textbf{ 62} of file \textbf{ lab3\+\_\+demo1.\+ino}.
+
