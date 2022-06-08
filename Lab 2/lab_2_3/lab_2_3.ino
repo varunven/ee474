@@ -258,12 +258,13 @@ void noOutputs(int seconds){
 
 void taskC(){
   //task A and B together
-  taskA(2);
-  taskB(4);
-  taskAB(10);
-//  if(MARY){
-//    mary();
-//  }
-//  //no outputs
-  noOutputs(1);
+//  taskA(2);
+//  taskB(4);
+//  taskAB(10);
+////  if(MARY){
+////    mary();
+////  }
+////  //no outputs
+//  noOutputs(1);
+  mary();
 }
