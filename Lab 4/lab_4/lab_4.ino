@@ -6,106 +6,11 @@
  *  Uses an RTOS to run certain tasks
  */
 #include <Arduino_FreeRTOS.h>
+#include <queue.h>
 
-#define OFF_BOARD_PIN 10
+#define OFF_BOARD_PIN A0
 
-////////////////////////////////////////////////
-// APPROVED FOR ECE 474   Spring 2021
-//
-//  NOTE: modify analogRead() on line 113 according
-//   to your setup.
-////////////////////////////////////////////////
-
-// define two tasks for Blink & AnalogRead
-void RT1( void *pvParameters );
-void TaskAnalogRead( void *pvParameters );
-
-/**
- * @brief Standard setup Arduino function
- * 
- * @see enableTimer4
- * @see schedulerSetup
- */void setup() {
-  
-  // initialize serial communication at 9600 bits per second:
-  Serial.begin(19200);
-  
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB, on LEONARDO, MICRO, YUN, and other 32u4 based boards.
-  } 
-
-  cli();
-  schedulerSetup();
-  sei();
-  // Task 1 setup
-  DDRL |= (1 << PL0);
-  enableTimer4();
-
-  // Now set up two tasks to run independently.
-  xTaskCreate(
-    RT1
-    ,  "Blink"   // A name just for humans
-    ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
-    ,  NULL
-    ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
-
-  xTaskCreate(
-    TaskAnalogRead
-    ,  "AnalogRead"
-    ,  128  // Stack size
-    ,  NULL
-    ,  1  // Priority
-    ,  NULL );
-
-  // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
-  //  (note how the above comment is WRONG!!!)
-  vTaskStartScheduler();
-}
-
-void loop()
-{
-  // Empty. Things are done in Tasks.
-}
-
-/*--------------------------------------------------*/
-/*---------------------- Tasks ---------------------*/
-/*--------------------------------------------------*/
-
-void TaskBlink(void *pvParameters)  // This is a task.
-{
- // (void) pvParameters;  // allocate stack space for params
-
-  // initialize digital LED_BUILTIN on pin 10 as an output.
-  pinMode(OFF_BOARD_PIN, OUTPUT);
-
-  for (;;) // A Task shall never return or exit.
-  {
-    digitalWrite(OFF_BOARD_PIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-    vTaskDelay( 100 / portTICK_PERIOD_MS ); // wait for 100 ms
-    digitalWrite(OFF_BOARD_PIN, LOW);    // turn the LED off by making the voltage LOW
-    vTaskDelay( 200 / portTICK_PERIOD_MS ); // wait for 200 ms
-  }
-}
-
-
-int notes[] = {293, 329, 261, 130, 196};
-void PlayTheme(void *pvParameters)
-{
-   // (void) pvParameters;
-   
-  for(int i=0; i<3; i++){
-    static int note = 0;
-    if (note == 5) {
-      setTimer4Hertz(0);
-      note = 0;
-      return;
-    }
-    setTimer4Hertz(notes[note]);
-    note++;
-    vTaskDelay( 1500 / portTICK_PERIOD_MS ); // wait for 1.5 s;
-  }
-}
+#define RANDOM_VALUES 64
 
 /**
  * @brief Enables the timer on the board
@@ -148,26 +53,179 @@ void setTimer4Hertz(int hertz) {
     }
 }
 
+// define two tasks for Blink & AnalogRead
+void TaskBlink( void *pvParameters );
+void PlayTheme( void *pvParameters );
+void RT3p0( void *pvParameters );
+void RT3p1( void *pvParameters );
+void RT4( void *pvParameters );
 
-void TaskAnalogRead(void *pvParameters)  // This is a task.
-{
- // (void) pvParameters;
+/**
+ * @brief Standard setup Arduino function
+ * 
+ * @see enableTimer4
+ * @see schedulerSetup
+ */void setup() {
   
-/*
-  AnalogReadSerial
-  Reads an analog input on pin 0, prints the result to the serial monitor.
-  Graphical representation is available using serial plotter (Tools > Serial Plotter menu)
-  Attach the center pin of a potentiometer to pin A0, and the outside pins to +5V and ground.
+  // initialize serial communication at 9600 bits per second:
+  Serial.begin(19200);
+  
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB, on LEONARDO, MICRO, YUN, and other 32u4 based boards.
+  } 
 
-  This example code is in the public domain.
-*/
+  DDRL |= (1 << PL0);
+  enableTimer4();
 
-  for (;;)
+  xTaskCreate(
+    TaskBlink
+    ,  "Blink"   // A name just for humans
+    ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  NULL
+    ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL );
+
+  xTaskCreate(
+    PlayTheme
+    ,  "Theme"   // A name just for humans
+    ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  NULL
+    ,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL );
+
+  xTaskCreate(
+    RT3p0
+    ,  "Value Generation"
+    ,  128  // Stack size
+    ,  NULL
+    ,  1  // Priority
+    ,  NULL );
+
+  // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
+  //  (note how the above comment is WRONG!!!)
+  vTaskStartScheduler();
+}
+
+void loop()
+{
+  // Empty. Things are done in Tasks.
+}
+
+/*--------------------------------------------------*/
+/*---------------------- Tasks ---------------------*/
+/*--------------------------------------------------*/
+
+void TaskBlink(void *pvParameters)  // This is a task.
+{
+ // (void) pvParameters;  // allocate stack space for params
+
+  // initialize digital LED_BUILTIN on pin 10 as an output.
+  pinMode(OFF_BOARD_PIN, OUTPUT);
+
+  for (;;) // A Task shall never return or exit.
   {
-    // read the input on analog pin 0:
-    int sensorValue = analogRead(A7);  /// modify for your input pin!
-    // print out the value you read:
-    Serial.println(sensorValue);
-    vTaskDelay(500/portTICK_PERIOD_MS);  // 0.5 sec in between reads for stability
+    digitalWrite(OFF_BOARD_PIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+    vTaskDelay( 100 / portTICK_PERIOD_MS ); // wait for 100 ms
+    digitalWrite(OFF_BOARD_PIN, LOW);    // turn the LED off by making the voltage LOW
+    vTaskDelay( 200 / portTICK_PERIOD_MS ); // wait for 200 ms
+  }
+}
+
+
+int notes[] = {293, 329, 261, 130, 196};
+void PlayTheme(void *pvParameters)
+{
+   // (void) pvParameters;
+  for (;;) {
+    for(int i=0; i < 3; i++) {
+      for (int j = 0; j < 5; j ++) {
+        setTimer4Hertz(notes[j]);
+        vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for 1 s;
+      } 
+      setTimer4Hertz(0);
+      vTaskDelay( 1500 / portTICK_PERIOD_MS ); // wait for 1.5 s;
+    }
+
+    vTaskSuspend( NULL );
+  }
+}
+
+double data[RANDOM_VALUES];
+QueueHandle_t data_queue;
+QueueHandle_t time_queue;
+
+void RT3p0(void *pvParameters) {
+  for (;;) {
+    for (int i = 0; i < RANDOM_VALUES; i++) {
+      data[i] = analogRead(A7) / 1024.0;
+      Serial.println(data[i]);
+      vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+
+    data_queue = xQueueCreate(5, sizeof(double*));
+    time_queue = xQueueCreate(5, sizeof(int));
+
+    xTaskCreate(
+    RT3p1
+    ,  "Value Sending"
+    ,  128  // Stack size
+    ,  NULL
+    ,  1  // Priority
+    ,  NULL );
+
+    xTaskCreate(
+    RT4    
+    ,  "FFT"
+    ,  128  // Stack size
+    ,  NULL
+    ,  1  // Priority
+    ,  NULL );
+
+    vTaskSuspend( NULL );
+  }
+}
+
+void RT3p1(void *pvParameters) {
+  for (;;) {
+    int time, total_time = 0;
+    for(int i = 0; i < 5; i++) {
+      xQueueSendToBack(data_queue, data, 0);
+
+      double* data2;
+
+      xQueuePeek(data_queue, data2, 0);
+      Serial.println(data[0]);
+      Serial.println(*data2);
+      Serial.println();
+
+      // while(xQueueReceive(time_queue, &time, 1) != pdPASS) {
+      //   vTaskDelay(10/portTICK_PERIOD_MS);
+      // }
+
+      total_time += time;
+    }
+
+    Serial.println(total_time);
+    vTaskSuspend( NULL );
+  }
+}
+void RT4(void *pvParameters) {
+  for (;;) {
+    int time = 100;
+    double* data;
+    for(int i = 0; i < 5; i++) {
+      Serial.println("Start PT4 Loop");
+      while(xQueueReceive(data_queue, data, 0) != pdPASS) {
+        vTaskDelay(100/portTICK_PERIOD_MS);
+      }
+      Serial.println("PT4 received");
+      Serial.println(*data);
+      
+      vTaskDelay(100/portTICK_PERIOD_MS);
+
+      Serial.println("PT4 sent");
+      xQueueSendToBack(time_queue, &time, 0);
+    }
+    vTaskSuspend( NULL );
   }
 }
