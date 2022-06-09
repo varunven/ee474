@@ -19,6 +19,8 @@
 #define LCD_DATA_6 49
 #define LCD_DATA_7 43
 
+#define OFF_BOARD_PIN A0
+
 #define CLOCK_RATE 16000000
 
 const byte ROWS = 4; //four rows
@@ -50,6 +52,7 @@ void setTimer4HertzT(int hertz);
 void playTheme(void *pvParameters);
 
 void updateLCD(void *pvParameters);
+void TaskBlink( void *pvParameters );
 
 //initialize an instance of class NewKeypad
 Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
@@ -102,6 +105,14 @@ void setup(){
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  &updateLCDT );
+
+  xTaskCreate(
+    TaskBlink
+    ,  "Blink"   // A name just for humans
+    ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  NULL
+    ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL );
 
   lcd.begin(16, 2);
   vTaskStartScheduler();
@@ -282,6 +293,22 @@ void updateLCD(void *pvParameters)
       lcd.noCursor();
       lcd.noBlink();
     }
+  }
+}
+
+void TaskBlink(void *pvParameters)  // This is a task.
+{
+ // (void) pvParameters;  // allocate stack space for params
+
+  // initialize digital LED_BUILTIN on pin 10 as an output.
+  pinMode(OFF_BOARD_PIN, OUTPUT);
+
+  for (;;) // A Task shall never return or exit.
+  {
+    digitalWrite(OFF_BOARD_PIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+    vTaskDelay( 100 / portTICK_PERIOD_MS ); // wait for 100 ms
+    digitalWrite(OFF_BOARD_PIN, LOW);    // turn the LED off by making the voltage LOW
+    vTaskDelay( 200 / portTICK_PERIOD_MS ); // wait for 200 ms
   }
 }
 
