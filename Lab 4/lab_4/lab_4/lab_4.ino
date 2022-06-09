@@ -23,8 +23,8 @@ char hexaKeys[ROWS][COLS] = {
  {'7','8','9','C'},
  {'*','0','#','D'}
 };
-byte rowPins[ROWS] = {11, 10, 9, 8}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {5, 4, 3, 2}; //connect to the column pinouts of the keypad --> change as needed for both
+byte rowPins[ROWS] = {5, 4, 3, 2}; //connect to the row pinouts of the keypad
+byte colPins[COLS] = {12, 11, 9, 8}; //connect to the column pinouts of the keypad --> change as needed for both
 
 TaskHandle_t prompt;
 TaskHandle_t playT;
@@ -122,8 +122,9 @@ void promptFrequency(void *pvParameters){
           digitalWrite(WARNING_LED, LOW);    // turn the LED off by making the voltage LOW
         }
         playNotes = false;
-      } 
+      }
       else if (customKey == 'A') {
+        Serial.println(inputStringT);
         inputStringB = "";
         if (inputStringT.length() > 0) {
           if(numsT < MEASURE_SIZE*NUM_MEASURES){
@@ -156,6 +157,7 @@ void promptFrequency(void *pvParameters){
         }
       }
       else if (customKey == 'B') {
+        Serial.println(inputStringB);
         inputStringT = "";
         if (inputStringB.length() > 0) {
           if(numsB < MEASURE_SIZE*NUM_MEASURES){
@@ -217,6 +219,7 @@ void enableTimer4() {
   PRR1 &= ~(1 << PRTIM4);
   // Enable the output pin
   DDRH |= 1 << PH3;
+  DDRH |= 1 << PH4;
   // Clear the timer registers
   TCCR4A = 0;
   TCCR4B = 0;
@@ -225,7 +228,7 @@ void enableTimer4() {
   // Set CS10 bit for a prescaler of 1
   TCCR4B |= (1 << CS10);
   // Enable output on PH3
-  TCCR4A |= 1 << COM4A0;
+  TCCR4A |= 1 << (COM4A0 & COM4A1);
   // Clear the timer counter
   TCNT4 = 0;
 }
@@ -233,10 +236,10 @@ void enableTimer4() {
 void setTimer4HertzT(int hertz) {
   if (hertz == 0) {
       // Disable the timer output
-      TCCR4A &= ~(1 << COM4A0);
+      TCCR4A &= ~(1 << (COM4A0));
   } else {
       // Make sure the timer is enabled
-      TCCR4A |= 1 << COM4A0;
+      TCCR4A |= 1 << (COM4A0 & COM4A1);
       // Set the CTC value based on the hertz. Multiplying by two because the clock toggles, and so the value for the ORC4A needs to be toggled twice to be one cycle.
       OCR4A = CLOCK_RATE/(hertz * 2);
   }
@@ -244,15 +247,15 @@ void setTimer4HertzT(int hertz) {
 
 //TODO: UPDATE THIS TO THE CORRECT PORT--> CURRENTLY OVERRIDES PORT 6, SHOULD CHANGE PORT 7
 void setTimer4HertzB(int hertz) {
-//  if (hertz == 0) {
-//      // Disable the timer output
-//      TCCR4A &= ~(1 << COM4A0);
-//  } else {
-//      // Make sure the timer is enabled
-//      TCCR4A |= 1 << COM4A0;
-//      // Set the CTC value based on the hertz. Multiplying by two because the clock toggles, and so the value for the ORC4A needs to be toggled twice to be one cycle.
-//      OCR4A = CLOCK_RATE/(hertz * 2);
-//  }
+  if (hertz == 0) {
+      // Disable the timer output
+      TCCR4A &= ~(1 << COM4A0);
+  } else {
+      // Make sure the timer is enabled
+      TCCR4A |= 1 << (COM4A0 & COM4A1);
+      // Set the CTC value based on the hertz. Multiplying by two because the clock toggles, and so the value for the ORC4A needs to be toggled twice to be one cycle.
+      OCR4B = CLOCK_RATE/(hertz * 2);
+  }
 }
 
 // create task for playing the sounds for treble
@@ -264,12 +267,7 @@ void playThemeTreble(void *pvParameters)
     boolean toPlay;
     int note = startArrT;
     int count = 0;
-    if(xQueueReceive(data_queue_T, &toPlay, 0)){
-      if(!toPlay){
-        Serial.println("X");
-      }
-    }
-    else{
+    if(!xQueueReceive(data_queue_T, &toPlay, 0)){
       toPlay = false;
     }
     if(toPlay){
@@ -307,16 +305,11 @@ void playThemeBass(void *pvParameters)
     boolean toPlay;
     int note = startArrB;
     int count = 0;
-    if(xQueueReceive(data_queue_B, &toPlay, 0)){
-      if(!toPlay){
-        Serial.println("X");
-      }
-    }
-    else{
+    if(!xQueueReceive(data_queue_B, &toPlay, 0)){
       toPlay = false;
     }
     if(toPlay){
-      vTaskSuspend(prompt);
+//      vTaskSuspend(prompt);
       while(count < min(numsB, MEASURE_SIZE*NUM_MEASURES)){
         if(note < MEASURE_SIZE*NUM_MEASURES){
           setTimer4HertzB(frequenciesB[note]);
@@ -336,7 +329,7 @@ void playThemeBass(void *pvParameters)
         count++;
       }
       setTimer4HertzB(0);
-      vTaskResume(prompt);
+//      vTaskResume(prompt);
     }
   }
 }
