@@ -7,10 +7,11 @@
  */
 #include <Arduino_FreeRTOS.h>
 #include <queue.h>
+#include <arduinoFFT.h>
 
 #define OFF_BOARD_PIN A0
 
-#define RANDOM_VALUES 64
+#define RANDOM_VALUES 1 << 9
 
 /**
  * @brief Enables the timer on the board
@@ -96,7 +97,7 @@ void RT4( void *pvParameters );
   xTaskCreate(
     RT3p0
     ,  "Value Generation"
-    ,  128  // Stack size
+    ,  1500  // Stack size
     ,  NULL
     ,  1  // Priority
     ,  NULL );
@@ -158,18 +159,17 @@ void RT3p0(void *pvParameters) {
   for (;;) {
     for (int i = 0; i < RANDOM_VALUES; i++) {
       data[i] = analogRead(A7) / 1024.0;
-      Serial.println(data[i]);
-      vTaskDelay(10 / portTICK_PERIOD_MS);
+      vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 
-    data_queue = xQueueCreate(5, sizeof(double*));
-    time_queue = xQueueCreate(5, sizeof(int));
+    data_queue = xQueueCreate(1, sizeof(double*));
+    time_queue = xQueueCreate(1, sizeof(int));
 
     xTaskCreate(
     RT3p1
     ,  "Value Sending"
-    ,  128  // Stack size
-    ,  NULL
+    ,  1500  // Stack size
+    ,  &data
     ,  1  // Priority
     ,  NULL );
 
@@ -189,18 +189,13 @@ void RT3p1(void *pvParameters) {
   for (;;) {
     int time, total_time = 0;
     for(int i = 0; i < 5; i++) {
-      xQueueSendToBack(data_queue, data, 0);
-
-      double* data2;
-
-      xQueuePeek(data_queue, data2, 0);
-      Serial.println(data[0]);
-      Serial.println(*data2);
-      Serial.println();
-
-      // while(xQueueReceive(time_queue, &time, 1) != pdPASS) {
-      //   vTaskDelay(10/portTICK_PERIOD_MS);
-      // }
+      //gamer moment
+      int finessed = (int)&data;
+      //int pointer implicitly casted to double pointer later
+      //why does this work?? idk???
+      xQueueSendToBack(data_queue, &finessed, 0); //previously &data YES THIS DIDNT WORK BUT CASTING TO AN INT DOES
+       
+      xQueueReceive(time_queue, &time, portMAX_DELAY);
 
       total_time += time;
     }
@@ -209,23 +204,25 @@ void RT3p1(void *pvParameters) {
     vTaskSuspend( NULL );
   }
 }
+
+arduinoFFT FFT = arduinoFFT();
+
 void RT4(void *pvParameters) {
   for (;;) {
     int time = 100;
     double* data;
     for(int i = 0; i < 5; i++) {
-      Serial.println("Start PT4 Loop");
-      while(xQueueReceive(data_queue, data, 0) != pdPASS) {
-        vTaskDelay(100/portTICK_PERIOD_MS);
-      }
-      Serial.println("PT4 received");
-      Serial.println(*data);
-      
-      vTaskDelay(100/portTICK_PERIOD_MS);
+      xQueueReceive(data_queue, &data, portMAX_DELAY);
+      time = millis();
+      double* vReal = data;
+      double* vImg = (double *)((int)data + RANDOM_VALUES / 2);
 
-      Serial.println("PT4 sent");
+      FFT.Compute(vReal, vImg, RANDOM_VALUES / 2, FFT_FORWARD);
+
+      time = millis() - time;
       xQueueSendToBack(time_queue, &time, 0);
     }
+
     vTaskSuspend( NULL );
   }
 }
