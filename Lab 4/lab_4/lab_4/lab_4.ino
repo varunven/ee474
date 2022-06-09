@@ -28,22 +28,15 @@ byte colPins[COLS] = {12, 11, 9, 8}; //connect to the column pinouts of the keyp
 
 TaskHandle_t prompt;
 TaskHandle_t playT;
-TaskHandle_t playB;
 
 int frequenciesT[MEASURE_SIZE*NUM_MEASURES];
-static int numsT = 0;
+static int numsT;
 static int startArrT = 0;
 String inputStringT;
-
-int frequenciesB[MEASURE_SIZE*NUM_MEASURES];
-static int numsB = 0;
-static int startArrB = 0;
-String inputStringB;
 
 void promptFrequency(void *pvParameters);
 void enableTimer4();
 void setTimer4HertzT(int hertz);
-void setTimer4HertzB(int hertz);
 void playTheme(void *pvParameters);
 void TaskBlink(void *pvParameters);
 
@@ -51,7 +44,6 @@ void TaskBlink(void *pvParameters);
 Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 
 QueueHandle_t data_queue_T;
-QueueHandle_t data_queue_B;
 
 void setup(){
   // initialize serial communication at 9600 bits per second:
@@ -63,18 +55,13 @@ void setup(){
 
   cli();
   sei();
-  // Task 1 setup
-  DDRL |= (1 << PL0); //port 6
   enableTimer4();
-  DDRK = 0xFF; // All ports used
-  DDRF = 1 << PF7 | 1 << PF6 | 1 << PF5 | 1 << PF4;
     
   pinMode(WARNING_LED, OUTPUT);
   pinMode(CONFIRMATION_LED, OUTPUT);
   pinMode(RESET_LED, OUTPUT);
 
   data_queue_T = xQueueCreate(3, sizeof(boolean));
-  data_queue_B = xQueueCreate(3, sizeof(boolean));
 
   // Now set up three tasks to run independently.
   xTaskCreate(
@@ -82,7 +69,7 @@ void setup(){
     ,  "Prompt Frequency"   // A name just for humans
     ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL
-    ,  3  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  &prompt );
 
   xTaskCreate(
@@ -90,18 +77,14 @@ void setup(){
     ,  "Play Treble Notes"   // A name just for humans
     ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL
-    ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  &playT );
 
-  xTaskCreate(
-    playThemeBass
-    ,  "Play Bass Notes"   // A name just for humans
-    ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
-    ,  NULL
-    ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  &playB );
-
   vTaskStartScheduler();
+
+  frequenciesT[0] = 440;  
+  frequenciesT[1] = 880;
+  frequenciesT[2] = 220;
 }
 
 //TODO: use pointer in array to mark the front, if they try to add notes at limit, then replace the old note and move pointer fwd one
@@ -113,10 +96,8 @@ void promptFrequency(void *pvParameters){
     if (customKey){
       if (customKey >= '0' && customKey <= '9') {     // only act on numeric keys
         inputStringT += customKey;               // append new character to input string
-        inputStringB += customKey;
-        if(inputStringT.toInt() > MAX_FREQ || inputStringB.toInt() > MAX_FREQ){ //can flash an LED to show that frequency was too high and took previous value
+        if(inputStringT.toInt() > MAX_FREQ){ //can flash an LED to show that frequency was too high and took previous value
           inputStringT = "";
-          inputStringB = "";
           digitalWrite(WARNING_LED, HIGH);   // turn the LED on (HIGH is the voltage level)
           vTaskDelay( 500 / portTICK_PERIOD_MS ); // wait for 1000 ms
           digitalWrite(WARNING_LED, LOW);    // turn the LED off by making the voltage LOW
@@ -125,7 +106,6 @@ void promptFrequency(void *pvParameters){
       }
       else if (customKey == 'A') {
         Serial.println(inputStringT);
-        inputStringB = "";
         if (inputStringT.length() > 0) {
           if(numsT < MEASURE_SIZE*NUM_MEASURES){
             frequenciesT[numsT] = inputStringT.toInt();
@@ -156,42 +136,8 @@ void promptFrequency(void *pvParameters){
           playNotes = false;
         }
       }
-      else if (customKey == 'B') {
-        Serial.println(inputStringB);
-        inputStringT = "";
-        if (inputStringB.length() > 0) {
-          if(numsB < MEASURE_SIZE*NUM_MEASURES){
-            frequenciesB[numsB] = inputStringB.toInt();
-            inputStringB = "";
-            numsB++;
-            digitalWrite(CONFIRMATION_LED, HIGH);   // turn the LED on (HIGH is the voltage level)
-            vTaskDelay( 500 / portTICK_PERIOD_MS ); // wait for 1000 ms
-            digitalWrite(CONFIRMATION_LED, LOW);    // turn the LED off by making the voltage LOW
-          }
-          else{
-            startArrB++;
-            frequenciesB[startArrB-1] = inputStringB.toInt();
-            inputStringB = "";
-            numsB++;
-            if(startArrB == MEASURE_SIZE*NUM_MEASURES){
-              startArrB = 0;
-            }
-            digitalWrite(OVERRIDE_LED, HIGH);   // turn the LED on (HIGH is the voltage level)
-            vTaskDelay( 500 / portTICK_PERIOD_MS ); // wait for 1000 ms
-            digitalWrite(OVERRIDE_LED, LOW);    // turn the LED off by making the voltage LOW
-          }
-          playNotes = false;
-        }
-        else{
-          digitalWrite(WARNING_LED, HIGH);   // turn the LED on (HIGH is the voltage level)
-          vTaskDelay( 500 / portTICK_PERIOD_MS ); // wait for 1000 ms
-          digitalWrite(WARNING_LED, LOW);    // turn the LED off by making the voltage LOW
-          playNotes = false;
-        }
-      }
       else if (customKey == '*') {
           inputStringT = "";
-          inputStringB = "";
           digitalWrite(RESET_LED, HIGH);   // turn the LED on (HIGH is the voltage level)
           vTaskDelay( 500 / portTICK_PERIOD_MS ); // wait for 1000 ms
           digitalWrite(RESET_LED, LOW);    // turn the LED off by making the voltage LOW
@@ -199,7 +145,6 @@ void promptFrequency(void *pvParameters){
       }
       else if (customKey == '#'){
         inputStringT = "";
-        inputStringB = "";
         digitalWrite(OVERRIDE_LED, HIGH);   // turn the LED on (HIGH is the voltage level)
         vTaskDelay( 500 / portTICK_PERIOD_MS ); // wait for 1000 ms
         digitalWrite(OVERRIDE_LED, LOW);    // turn the LED off by making the voltage LOW
@@ -209,7 +154,6 @@ void promptFrequency(void *pvParameters){
         playNotes = false;
       }
       xQueueSend(data_queue_T, &playNotes, 0);
-      xQueueSend(data_queue_B, &playNotes, 0);
     }
   }
 }
@@ -219,7 +163,6 @@ void enableTimer4() {
   PRR1 &= ~(1 << PRTIM4);
   // Enable the output pin
   DDRH |= 1 << PH3;
-  DDRH |= 1 << PH4;
   // Clear the timer registers
   TCCR4A = 0;
   TCCR4B = 0;
@@ -228,7 +171,7 @@ void enableTimer4() {
   // Set CS10 bit for a prescaler of 1
   TCCR4B |= (1 << CS10);
   // Enable output on PH3
-  TCCR4A |= 1 << (COM4A0 & COM4A1);
+  TCCR4A |= 1 << (COM4A0);
   // Clear the timer counter
   TCNT4 = 0;
 }
@@ -239,22 +182,9 @@ void setTimer4HertzT(int hertz) {
       TCCR4A &= ~(1 << (COM4A0));
   } else {
       // Make sure the timer is enabled
-      TCCR4A |= 1 << (COM4A0 & COM4A1);
+      TCCR4A |= (1 << COM4A0);
       // Set the CTC value based on the hertz. Multiplying by two because the clock toggles, and so the value for the ORC4A needs to be toggled twice to be one cycle.
       OCR4A = CLOCK_RATE/(hertz * 2);
-  }
-}
-
-//TODO: UPDATE THIS TO THE CORRECT PORT--> CURRENTLY OVERRIDES PORT 6, SHOULD CHANGE PORT 7
-void setTimer4HertzB(int hertz) {
-  if (hertz == 0) {
-      // Disable the timer output
-      TCCR4A &= ~(1 << COM4A0);
-  } else {
-      // Make sure the timer is enabled
-      TCCR4A |= 1 << (COM4A0 & COM4A1);
-      // Set the CTC value based on the hertz. Multiplying by two because the clock toggles, and so the value for the ORC4A needs to be toggled twice to be one cycle.
-      OCR4B = CLOCK_RATE/(hertz * 2);
   }
 }
 
@@ -273,6 +203,7 @@ void playThemeTreble(void *pvParameters)
     if(toPlay){
       vTaskSuspend(prompt);
       while(count < min(numsT, MEASURE_SIZE*NUM_MEASURES)){
+        Serial.println("Next note");
         if(note < MEASURE_SIZE*NUM_MEASURES){
           setTimer4HertzT(frequenciesT[note]);
           vTaskDelay( 800 / portTICK_PERIOD_MS ); // wait for 0.5 s;
@@ -292,44 +223,6 @@ void playThemeTreble(void *pvParameters)
       }
       setTimer4HertzT(0);
       vTaskResume(prompt);
-    }
-  }
-}
-
-// create task for playing the sounds for bass
-void playThemeBass(void *pvParameters)
-{
-  // (void) pvParameters;
-  //only play when user presses the D button on the keypad (pause other task during it,resume at the end)
-  for(;;){
-    boolean toPlay;
-    int note = startArrB;
-    int count = 0;
-    if(!xQueueReceive(data_queue_B, &toPlay, 0)){
-      toPlay = false;
-    }
-    if(toPlay){
-//      vTaskSuspend(prompt);
-      while(count < min(numsB, MEASURE_SIZE*NUM_MEASURES)){
-        if(note < MEASURE_SIZE*NUM_MEASURES){
-          setTimer4HertzB(frequenciesB[note]);
-          vTaskDelay( 800 / portTICK_PERIOD_MS ); // wait for 0.5 s;
-          setTimer4HertzB(0);
-          vTaskDelay( 100 / portTICK_PERIOD_MS ); // wait for 0.5 s;
-          note++;
-        }
-        else{
-          note = 0;
-          setTimer4HertzB(frequenciesB[note]);
-          vTaskDelay( 800 / portTICK_PERIOD_MS ); // wait for 0.5 s;
-          setTimer4HertzB(0);
-          vTaskDelay( 100 / portTICK_PERIOD_MS ); // wait for 0.5 s;
-          note++;
-        }
-        count++;
-      }
-      setTimer4HertzB(0);
-//      vTaskResume(prompt);
     }
   }
 }
