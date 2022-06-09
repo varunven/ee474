@@ -2,6 +2,7 @@
 #include <Arduino_FreeRTOS.h>
 #include "task.h"
 #include "queue.h"
+#include <LiquidCrystal.h>
 
 #define RESET_LED 46
 #define WARNING_LED 48
@@ -10,6 +11,13 @@
 #define MEASURE_SIZE 4
 #define NUM_MEASURES 4
 #define MAX_FREQ 1000
+
+#define LCD_RESET 53
+#define LCD_ENABLE 47
+#define LCD_DATA_4 51
+#define LCD_DATA_5 45
+#define LCD_DATA_6 49
+#define LCD_DATA_7 43
 
 #define CLOCK_RATE 16000000
 
@@ -28,6 +36,7 @@ byte colPins[COLS] = {12, 11, 9, 8}; //connect to the column pinouts of the keyp
 
 TaskHandle_t prompt;
 TaskHandle_t playT;
+TaskHandle_t updateLCDT;
 
 int frequenciesT[MEASURE_SIZE*NUM_MEASURES];
 static int numsT;
@@ -35,15 +44,20 @@ static int startArrT = 0;
 String inputStringT;
 
 void promptFrequency(void *pvParameters);
+
 void enableTimer4();
 void setTimer4HertzT(int hertz);
 void playTheme(void *pvParameters);
-void TaskBlink(void *pvParameters);
+
+void updateLCD(void *pvParameters);
 
 //initialize an instance of class NewKeypad
 Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 
+LiquidCrystal lcd(LCD_RESET, LCD_ENABLE, LCD_DATA_4, LCD_DATA_5, LCD_DATA_6, LCD_DATA_7);
+
 QueueHandle_t data_queue_T;
+QueueHandle_t key_pressed_queue;
 
 void setup(){
   // initialize serial communication at 9600 bits per second:
@@ -62,6 +76,7 @@ void setup(){
   pinMode(RESET_LED, OUTPUT);
 
   data_queue_T = xQueueCreate(3, sizeof(boolean));
+  key_pressed_queue = xQueueCreate(3, sizeof(char));
 
   // Now set up three tasks to run independently.
   xTaskCreate(
@@ -80,11 +95,18 @@ void setup(){
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  &playT );
 
+  xTaskCreate(
+    updateLCD
+    ,  "update LCD"   // A name just for humans
+    ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  NULL
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  &updateLCDT );
+
+  lcd.begin(16, 2);
   vTaskStartScheduler();
 
-  frequenciesT[0] = 440;  
-  frequenciesT[1] = 880;
-  frequenciesT[2] = 220;
+  
 }
 
 //TODO: use pointer in array to mark the front, if they try to add notes at limit, then replace the old note and move pointer fwd one
@@ -94,6 +116,7 @@ void promptFrequency(void *pvParameters){
     boolean playNotes;
     char customKey = customKeypad.getKey();
     if (customKey){
+      Serial.println(customKey);
       if (customKey >= '0' && customKey <= '9') {     // only act on numeric keys
         inputStringT += customKey;               // append new character to input string
         if(inputStringT.toInt() > MAX_FREQ){ //can flash an LED to show that frequency was too high and took previous value
@@ -154,6 +177,8 @@ void promptFrequency(void *pvParameters){
         playNotes = false;
       }
       xQueueSend(data_queue_T, &playNotes, 0);
+      // value here doesnt matter, its just a status update
+      xQueueSend(key_pressed_queue, &customKey, 0);
     }
   }
 }
@@ -203,7 +228,6 @@ void playThemeTreble(void *pvParameters)
     if(toPlay){
       vTaskSuspend(prompt);
       while(count < min(numsT, MEASURE_SIZE*NUM_MEASURES)){
-        Serial.println("Next note");
         if(note < MEASURE_SIZE*NUM_MEASURES){
           setTimer4HertzT(frequenciesT[note]);
           vTaskDelay( 800 / portTICK_PERIOD_MS ); // wait for 0.5 s;
@@ -222,7 +246,41 @@ void playThemeTreble(void *pvParameters)
         count++;
       }
       setTimer4HertzT(0);
+      // Send an empty key to the LCD updater
+      char key = '\0';
+      xQueueSend(key_pressed_queue, &key, 0);
       vTaskResume(prompt);
+    }
+  }
+}
+
+// create task for playing the sounds for treble
+void updateLCD(void *pvParameters)
+{
+  for(;;){
+    char key = '\0';
+    xQueueReceive(key_pressed_queue, &key, portMAX_DELAY);
+    lcd.setCursor(0, 0);
+    lcd.clear();
+    for (int i = 0; i < numsT; i++) {
+      lcd.print("#");
+    }
+    
+    if (inputStringT.length() > 0) {
+      lcd.setCursor(1, 1);
+      lcd.print("Curr freq: ");
+      lcd.print(inputStringT);
+    }
+
+    lcd.setCursor(numsT, 0);
+    lcd.cursor();
+    lcd.blink();
+
+    if (key == '#') {
+      lcd.setCursor(2, 1);
+      lcd.print("Now Playing.");
+      lcd.noCursor();
+      lcd.noBlink();
     }
   }
 }
